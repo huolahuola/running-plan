@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>跑起来 · 12周新手跑步计划</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.15);
+      --orange: #f97316;
+      --bg: #080d17;
+      --card: #0f1623;
+      --card2: #161e2e;
+      --border: rgba(255,255,255,0.07);
+      --text: #f1f5f9;
+      --gray: #64748b;
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; min-height: 100vh; }
+
+    .glass { background: var(--card); border: 1px solid var(--border); }
+    .glass2 { background: var(--card2); border: 1px solid var(--border); }
+    .green-glow { box-shadow: 0 0 24px rgba(34,197,94,0.2); }
+    .accent { color: var(--green); }
+    .accent-bg { background: var(--green); }
+
+    /* Hero gradient */
+    .hero-bg {
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(34,197,94,0.12) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 40% at 80% 80%, rgba(249,115,22,0.06) 0%, transparent 60%),
+                  var(--bg);
+    }
+
+    /* Week pill */
+    .week-pill { flex-shrink: 0; width: 64px; cursor: pointer; transition: all .2s; }
+    .week-pill .dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: all .2s; border: 2px solid transparent; }
+    .week-pill.done .dot { background: var(--green); color: #000; }
+    .week-pill.current .dot { background: var(--green-dim); border-color: var(--green); color: var(--green); box-shadow: 0 0 16px rgba(34,197,94,0.3); }
+    .week-pill.future .dot { background: rgba(255,255,255,0.05); color: var(--gray); border-color: rgba(255,255,255,0.08); }
+    .week-pill.active .dot { transform: scale(1.15); }
+
+    /* Knowledge card */
+    .know-card { border-left: 3px solid var(--green); }
+    .locked-card { border-left: 3px solid var(--border); opacity: .55; }
+
+    /* Tab */
+    .tab { padding: 8px 20px; border-radius: 999px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all .2s; color: var(--gray); }
+    .tab.active { background: var(--green-dim); color: var(--green); }
+
+    /* Session card */
+    .session { border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; border: 1px solid var(--border); background: var(--card2); transition: border-color .2s; }
+    .session:hover { border-color: rgba(34,197,94,0.3); }
+    .session.rest { border-color: rgba(249,115,22,0.15); }
+
+    /* Progress bar */
+    .prog-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+    .prog-fill { height: 100%; background: linear-gradient(90deg, var(--green), #86efac); border-radius: 2px; transition: width .6s ease; }
+
+    /* Roadmap line */
+    .roadmap-line { position: absolute; top: 20px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--green) var(--prog, 0%), rgba(255,255,255,0.08) var(--prog, 0%)); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { height: 4px; width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+    /* Badge */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .badge-green { background: var(--green-dim); color: var(--green); }
+    .badge-orange { background: rgba(249,115,22,0.12); color: var(--orange); }
+    .badge-gray { background: rgba(255,255,255,0.06); color: var(--gray); }
+
+    /* Zone bars */
+    .zone-bar { height: 28px; border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 600; margin-bottom: 4px; transition: width .5s; }
+
+    /* Animate in */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+    .fade-up { animation: fadeUp .4s ease forwards; }
+
+    /* Pulse */
+    @keyframes pulse-green { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.4); } 50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); } }
+    .pulse { animation: pulse-green 2s infinite; }
+
+    /* Setup modal */
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:50; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
+
+    /* HR calculator */
+    input[type=range] { accent-color: var(--green); }
+    input[type=date], input[type=number], input[type=text] { background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; width: 100%; font-size: 15px; outline: none; }
+    input[type=date]:focus, input[type=number]:focus { border-color: var(--green); }
+  </style>
+</head>
+<body>
+
+<!-- ─── Setup Modal ─────────────────────────────────── -->
+<div id="setupModal" class="modal-bg hidden">
+  <div class="glass rounded-3xl p-8 mx-4 max-w-sm w-full fade-up">
+    <div class="text-4xl text-center mb-3">🏃</div>
+    <h2 class="text-2xl font-black text-center mb-1">你好，跑者！</h2>
+    <p class="text-center text-sm mb-6" style="color:var(--gray)">设置开始日期，解锁你的12周计划</p>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">你的名字</label>
+        <input type="text" id="setupName" placeholder="例如：小雨" maxlength="12">
+      </div>
+      <div>
+        <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">第1周开始日期</label>
+        <input type="date" id="setupDate">
+      </div>
+      <div>
+        <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">你的年龄（用于计算心率）</label>
+        <input type="number" id="setupAge" placeholder="例如：28" min="15" max="70">
+      </div>
+      <button onclick="saveSetup()" class="w-full font-black py-3.5 rounded-2xl text-black text-base active:scale-95 transition-transform" style="background:var(--green)">
+        开始我的跑步之旅 →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Nav ────────────────────────────────────────── -->
+<nav class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-5 py-3.5" style="background:rgba(8,13,23,.85); backdrop-filter:blur(16px); border-bottom:1px solid var(--border)">
+  <div class="flex items-center gap-2">
+    <span class="text-xl">🏃</span>
+    <span class="font-black text-base tracking-tight">跑起来</span>
+  </div>
+  <div id="navInfo" class="hidden flex items-center gap-2">
+    <span id="navWeekBadge" class="badge badge-green">第1周</span>
+    <button onclick="openSettings()" class="text-xs px-3 py-1.5 rounded-full font-bold" style="background:rgba(255,255,255,0.06);color:var(--gray)">设置</button>
+  </div>
+</nav>
+
+<!-- ─── App ────────────────────────────────────────── -->
+<div id="app" class="hidden pt-16">
+
+  <!-- Hero -->
+  <div class="hero-bg px-5 pt-10 pb-8">
+    <div class="max-w-lg mx-auto">
+      <p id="heroGreet" class="text-sm font-bold mb-1" style="color:var(--green)">第1周 · 开始</p>
+      <h1 class="text-3xl font-black leading-tight mb-2">迈出第一步<br>改变从今天开始</h1>
+      <p id="heroSub" class="text-sm mb-6" style="color:var(--gray)">12周后，你将完成人生第一个5公里</p>
+
+      <!-- Progress overview -->
+      <div class="glass rounded-2xl p-5 mb-2 green-glow">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-sm font-bold">总体进度</span>
+          <span id="progressPct" class="text-sm font-black accent">0%</span>
+        </div>
+        <div class="prog-bar mb-4">
+          <div id="progressBar" class="prog-fill" style="width:0%"></div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div>
+            <p id="statWeek" class="text-xl font-black accent">1</p>
+            <p class="text-xs" style="color:var(--gray)">当前周次</p>
+          </div>
+          <div>
+            <p id="statKm" class="text-xl font-black" style="color:var(--orange)">0</p>
+            <p class="text-xs" style="color:var(--gray)">累计公里</p>
+          </div>
+          <div>
+            <p id="statDays" class="text-xl font-black text-white">84</p>
+            <p class="text-xs" style="color:var(--gray)">计划天数</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week Roadmap -->
+  <div class="px-5 py-5 max-w-lg mx-auto">
+    <p class="text-xs font-bold mb-3" style="color:var(--gray)">12周路线图</p>
+    <div class="overflow-x-auto pb-2">
+      <div id="weekRoadmap" class="flex gap-2 relative" style="min-width:max-content">
+        <!-- generated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="px-5 max-w-lg mx-auto">
+    <div class="flex gap-1 mb-5 glass rounded-2xl p-1">
+      <button class="tab active flex-1 text-center" onclick="switchTab('training')" id="tab-training">本周训练</button>
+      <button class="tab flex-1 text-center" onclick="switchTab('knowledge')" id="tab-knowledge">本周知识</button>
+      <button class="tab flex-1 text-center" onclick="switchTab('plan')" id="tab-plan">全程计划</button>
+    </div>
+
+    <!-- Training tab -->
+    <div id="panel-training" class="fade-up">
+      <div id="trainingContent"></div>
+    </div>
+
+    <!-- Knowledge tab -->
+    <div id="panel-knowledge" class="hidden fade-up">
+      <div id="knowledgeContent"></div>
+    </div>
+
+    <!-- Full plan tab -->
+    <div id="panel-plan" class="hidden fade-up">
+      <div id="planContent"></div>
+    </div>
+  </div>
+
+  <div class="h-16"></div>
+</div>
+
+<script>
+// ─── Data ────────────────────────────────────────────
+const PLAN = [
+  {
+    week: 1, topic: '心率与跑步区间', icon: '❤️', color: '#ef4444',
+    weeklyKm: '6–8 km',
+    sessions: [
+      { day: '周一', label: '走跑交替', desc: '走5分钟热身 · (跑1分钟+走2分钟)×6 · 走5分钟放松', duration: 28, type: 'run' },
+      { day: '周三', label: '走跑交替', desc: '同上，注意感受心率变化', duration: 28, type: 'run' },
+      { day: '周六', label: '走跑交替', desc: '同上，跑步时尝试"说话测试"，全程要能说完整句子', duration: 28, type: 'run' },
+      { day: '周二/四/五', label: '休息或散步', desc: '轻松散步20分钟，让身体适应', type: 'rest' },
+    ],
+    knowledge: {
+      title: '心率区间：让数据指导你的每一步',
+      summary: '跑太快是新手最常犯的错误。心率数据能帮你找到最有效的训练节奏。',
+      sections: [
+        {
+          heading: '最大心率怎么算？',
+          text: '公式：<strong>220 − 年龄 = 最大心率（HRmax）</strong><br>例如28岁：220−28 = 192 bpm。这是你心脏理论上能达到的最高跳动频率。',
+        },
+        {
+          heading: '5个心率区间',
+          zones: [
+            { z: 'Zone 1', pct: '50–60%', label: '超轻松', desc: '热身、冷身、恢复跑', color: '#3b82f6', w: 50 },
+            { z: 'Zone 2', pct: '60–70%', label: '有氧基础 ⭐', desc: '初学者的黄金区间，脂肪燃烧最高效，能轻松说话', color: '#22c55e', w: 65 },
+            { z: 'Zone 3', pct: '70–80%', label: '有氧进阶', desc: '稍微喘气，能说短句', color: '#eab308', w: 75 },
+            { z: 'Zone 4', pct: '80–90%', label: '乳酸阈值', desc: '较难说话，进阶跑者配速跑', color: '#f97316', w: 85 },
+            { z: 'Zone 5', pct: '90–100%', label: '无氧冲刺', desc: '无法说话，只能维持1–3分钟', color: '#ef4444', w: 95 },
+          ],
+        },
+        {
+          heading: '初学者建议',
+          tips: ['✅ 80%的训练时间保持在Zone 2（有氧区间）', '✅ "会说话测试"：如果你能舒适地说完一个完整句子，你就在Zone 2', '✅ 感觉太慢是正常的！Zone 2训练初期会很慢，但这是打基础的关键', '⚠️ 避免每次都跑到气喘吁吁——这反而会减慢进步'],
+        },
+        {
+          heading: '本周实践',
+          text: '今天跑步时，每隔5分钟停下来感受一下心跳。能数到10秒内跳几下，乘以6就是你的bpm。目标是保持在最大心率的60–70%。',
+        },
+      ],
+    },
+  },
+  {
+    week: 2, topic: '跑姿与步频', icon: '🦶', color: '#8b5cf6',
+    weeklyKm: '8–10 km',
+    sessions: [
+      { day: '周一', label: '走跑交替', desc: '走5分钟 · (跑2分钟+走2分钟)×5 · 走5分钟', duration: 30, type: 'run' },
+      { day: '周三', label: '走跑交替', desc: '同上，重点感受脚落地的位置', duration: 30, type: 'run' },
+      { day: '周六', label: '走跑交替（稍长）', desc: '走5分钟 · (跑3分钟+走2分钟)×4 · 走5分钟', duration: 35, type: 'run' },
+      { day: '其余天', label: '休息', desc: '或者轻松散步', type: 'rest' },
+    ],
+    knowledge: {
+      title: '跑姿 & 步频：跑得更轻松的秘密',
+      summary: '好的跑姿能减少受伤风险，让你用更少力气跑更远。',
+      sections: [
+        {
+          heading: '落地方式',
+          text: '避免<strong>脚跟重踏</strong>（heel strike）——脚跟先着地会产生巨大冲击力传到膝盖。理想落地：中足或前足先着地，脚落在身体正下方，而不是前方。',
+        },
+        {
+          heading: '步频：黄金数字 170–180',
+          text: '步频 = 每分钟的步数。研究表明，<strong>170–180步/分钟</strong>是最省力的跑步频率。提高步频能自动缩短步幅，减少膝盖冲击。<br><br>📱 试试：手机播放180 BPM的节拍器，跟着节奏跑。',
+        },
+        {
+          heading: '身体姿势',
+          tips: [
+            '👤 身体轻微前倾3–5度（从脚踝发力，不是弯腰）',
+            '💪 手臂保持90度，贴近身体前后摆动，不要左右晃',
+            '✊ 手掌放松，想象握着一片薯片不把它捏碎',
+            '👁️ 视线看向前方15–20米，头部保持中立',
+            '🫁 肩膀放松下沉，不要耸肩',
+          ],
+        },
+        {
+          heading: '核心发力',
+          text: '跑步时轻微收紧核心肌群（肚脐微微向内收），能让整个身体更稳定，减少能量浪费。',
+        },
+      ],
+    },
+  },
+  {
+    week: 3, topic: '配速的秘密', icon: '⏱️', color: '#f59e0b',
+    weeklyKm: '10–12 km',
+    sessions: [
+      { day: '周一', label: '连续慢跑', desc: '走5分钟热身 · 连续跑10分钟 · 走2分钟 · 再跑10分钟 · 走5分钟放松', duration: 32, type: 'run' },
+      { day: '周四', label: '连续慢跑', desc: '同上', duration: 32, type: 'run' },
+      { day: '周六', label: '轻松长跑', desc: '走5分钟 · 尽量连续跑15分钟 · 走5分钟，中途如需走路可以', duration: 35, type: 'run' },
+      { day: '其余天', label: '休息', desc: '可做15分钟拉伸', type: 'rest' },
+    ],
+    knowledge: {
+      title: '配速：找到属于你的节奏',
+      summary: '配速不是越快越好。找到正确的配速，你才能真正爱上跑步。',
+      sections: [
+        {
+          heading: '什么是配速？',
+          text: '配速 = 跑完1公里需要的时间，单位：分钟/公里（min/km）。例如配速6:30，意思是每公里跑6分30秒。<br><br>新手舒适配速通常在 <strong>7:00–8:30 min/km</strong>，比你想象的慢得多——这很正常！',
+        },
+        {
+          heading: 'RPE 感知用力度量表',
+          tips: [
+            '1–2分：极轻松，散步状态',
+            '3–4分：轻松，可以唱歌（Zone 1-2）⭐ 新手目标',
+            '5–6分：中等，能说短句（Zone 3）',
+            '7–8分：较难，只能说一两个字（Zone 4）',
+            '9–10分：极限冲刺，说不了话（Zone 5）',
+          ],
+        },
+        {
+          heading: '为什么不要比配速？',
+          text: '每个人的有氧基础不同，同龄人可能比你快2分钟/公里，但这完全正常。你的对手只有昨天的自己。<br><br><strong>判断配速是否合适的唯一标准：你能用正常的语速说完一句话吗？</strong>',
+        },
+        {
+          heading: '负分（Negative Split）策略',
+          text: '职业跑者的秘诀：后半程比前半程快。初学者常犯的错误是前半程兴奋冲太快，后半程精疲力竭。练习前慢后快，你会跑得更舒服。',
+        },
+      ],
+    },
+  },
+  {
+    week: 4, topic: '呼吸节奏', icon: '🌬️', color: '#06b6d4',
+    weeklyKm: '12–14 km',
+    sessions: [
+      { day: '周一', label: '连续跑', desc: '走5分钟 · 连续跑15分钟 · 走5分钟', duration: 30, type: 'run' },
+      { day: '周四', label: '连续跑', desc: '走5分钟 · 连续跑18分钟 · 走5分钟，练习2:2呼吸节奏', duration: 33, type: 'run' },
+      { day: '周六', label: '连续跑', desc: '走5分钟 · 连续跑20分钟 · 走5分钟，目标全程稳定呼吸', duration: 35, type: 'run' },
+      { day: '其余天', label: '休息', desc: '休息或轻松散步', type: 'rest' },
+    ],
+    knowledge: {
+      title: '呼吸节奏：让每次呼吸都有效',
+      summary: '正确的呼吸方式能大幅提升跑步效率，减少侧腹痛。',
+      sections: [
+        {
+          heading: '腹式呼吸 vs 胸式呼吸',
+          text: '<strong>腹式呼吸</strong>（横膈膜呼吸）是跑步时的正确方式。吸气时腹部向外扩张，呼气时腹部收缩。这样能吸入更多氧气，比浅浅的胸式呼吸效率高30%。<br><br>练习：躺下来，手放肚子上，感受腹部随呼吸起伏。',
+        },
+        {
+          heading: '节奏呼吸法',
+          tips: [
+            '🟢 轻松跑：吸气3步 + 呼气2步（3:2节奏）',
+            '🟡 中等强度：吸气2步 + 呼气2步（2:2节奏）',
+            '🔴 冲刺：吸气1步 + 呼气1步（1:1节奏）',
+          ],
+        },
+        {
+          heading: '侧腹痛怎么办？',
+          text: '侧腹痛通常是横膈膜痉挛，原因多为：呼吸太浅、跑前刚吃东西、突然加速。<br><br><strong>即时解决：</strong>放慢速度，深吸一口气，呼气时用嘴慢慢吐出，同时用手按压疼痛位置。通常1–2分钟后会缓解。',
+        },
+        {
+          heading: '鼻呼吸 vs 口呼吸？',
+          text: '两者都可以，强度低时可以尝试鼻呼吸（过滤空气、保持湿润），强度高时口鼻并用更高效。不要强迫自己只用鼻子呼吸，缺氧更糟糕。',
+        },
+      ],
+    },
+  },
+  {
+    week: 5, topic: '热身与拉伸', icon: '🤸', color: '#10b981',
+    weeklyKm: '14–16 km',
+    sessions: [
+      { day: '周一', label: '连续跑20分钟', desc: '完整热身5分钟 · 连续跑20分钟 · 拉伸10分钟', duration: 40, type: 'run' },
+      { day: '周四', label: '连续跑22分钟', desc: '热身5分钟 · 连续跑22分钟 · 拉伸10分钟', duration: 42, type: 'run' },
+      { day: '周六', label: '连续跑25分钟', desc: '热身5分钟 · 连续跑25分钟 · 拉伸10分钟，这是里程碑！', duration: 45, type: 'run' },
+      { day: '其余天', label: '休息', desc: '可做瑜伽或轻松拉伸', type: 'rest' },
+    ],
+    knowledge: {
+      title: '热身与拉伸：保护身体的护盾',
+      summary: '跑步前后的热身拉伸是预防受伤最有效的方法，用10分钟换来持续跑步的能力。',
+      sections: [
+        {
+          heading: '跑前：动态热身（5分钟）',
+          tips: [
+            '🦵 高抬腿 30秒 — 原地踏步，膝盖抬至腰部高度',
+            '🔄 腿部摆动 各30秒 — 手扶墙，腿前后左右摆动',
+            '🦶 脚踝旋转 各15圈 — 激活踝关节，预防扭伤',
+            '🏃 侧弓步 10次 — 激活髋部和大腿内侧',
+            '🔛 腿部高踢臀 30秒 — 热身腘绳肌',
+          ],
+        },
+        {
+          heading: '跑后：静态拉伸（10分钟）',
+          tips: [
+            '🦵 股四头肌拉伸 各30秒 — 单脚站立，拉后脚向臀部',
+            '🦵 腘绳肌拉伸 各30秒 — 脚放凳子上前倾',
+            '➡️ 髂胫束拉伸 各30秒 — 双腿交叉站立，向侧弯腰',
+            '👣 小腿拉伸 各30秒 — 一脚在前弓步，后腿打直',
+            '🍑 臀大肌拉伸 各30秒 — 仰卧，一腿翘到另一腿膝盖上',
+          ],
+        },
+        {
+          heading: '重要原则',
+          tips: [
+            '⚡ 跑前做动态热身（动起来），不要做静态拉伸（会降低肌肉力量）',
+            '🧘 跑后做静态拉伸（保持姿势），肌肉热的时候拉伸效果最好',
+            '⏰ 每个拉伸动作保持20–30秒，感到轻微拉紧感即可，不要拉到疼痛',
+          ],
+        },
+      ],
+    },
+  },
+  {
+    week: 6, topic: '跑鞋科学', icon: '👟', color: '#f97316',
+    weeklyKm: '16–18 km',
+    sessions: [
+      { day: '周一', label: '连续跑25分钟', desc: '热身 · 连续跑25分钟 · 拉伸', duration: 40, type: 'run' },
+      { day: '周四', label: '连续跑28分钟', desc: '热身 · 连续跑28分钟 · 拉伸', duration: 43, type: 'run' },
+      { day: '周六', label: '长距离慢跑', desc: '热身 · 连续跑30分钟，全程保持Zone 2心率 · 拉伸', duration: 45, type: 'run' },
+      { day: '其余天', label: '休息', desc: '今天可以逛逛跑鞋店！', type: 'rest' },
+    ],
+    knowledge: {
+      title: '跑鞋：投资最值得的跑步装备',
+      summary: '一双适合你的跑鞋，能减少30%的受伤风险。不要穿普通运动鞋跑步。',
+      sections: [
+        {
+          heading: '了解你的足型（湿足印测试）',
+          text: '足底弄湿后踩在纸上，观察足印形状：<br>• <strong>正常足</strong>：足印中间稍微收窄 → 适合中性鞋<br>• <strong>扁平足</strong>：足印几乎完整 → 适合支撑型/稳定型鞋<br>• <strong>高弓足</strong>：足印非常细窄 → 适合缓震型鞋',
+        },
+        {
+          heading: '鞋型选择指南',
+          tips: [
+            '🟢 中性鞋（Neutral）— 正常足/高弓足，大多数人适用',
+            '🔵 支撑型（Support/Stability）— 扁平足，内旋明显者',
+            '🟡 缓震型（Cushion）— 高弓足，体重较大者',
+          ],
+        },
+        {
+          heading: '购买跑鞋的实用建议',
+          tips: [
+            '📏 买大半码到一码，脚趾需要约1cm活动空间',
+            '🌆 下午或运动后去买鞋，这时脚最大',
+            '🧦 穿跑步袜去试鞋',
+            '🔄 不要因为"要磨合"而忍受不舒适感',
+            '⏱️ 跑鞋寿命：500–800公里，约6–12个月需更换',
+          ],
+        },
+        {
+          heading: '入门性价比之选',
+          text: '不需要买最贵的。<strong>耐克Pegasus、亚瑟士Gel-Nimbus/Cumulus、Brooks Ghost、New Balance 860</strong> 都是口碑很好的入门跑鞋，价格在600–1200元左右。',
+        },
+      ],
+    },
+  },
+  {
+    week: 7, topic: '跑步营养', icon: '🥗', color: '#84cc16',
+    weeklyKm: '18–20 km',
+    sessions: [
+      { day: '周二', label: '连续跑30分钟', desc: '热身 · 连续跑30分钟（稳定Zone 2）· 拉伸', duration: 45, type: 'run' },
+      { day: '周四', label: '连续跑30分钟', desc: '同上', duration: 45, type: 'run' },
+      { day: '周日', label: '轻松长跑35分钟', desc: '热身 · 轻松跑35分钟，这是目前最长距离 · 拉伸', duration: 50, type: 'run' },
+      { day: '其余天', label: '休息', desc: '注意跑后补充营养', type: 'rest' },
+    ],
+    knowledge: {
+      title: '跑步营养：用食物为跑步加油',
+      summary: '你吃什么和什么时候吃，直接影响跑步表现和恢复速度。',
+      sections: [
+        {
+          heading: '跑前饮食（2–3小时前）',
+          tips: [
+            '🍌 易消化的碳水：香蕉、燕麦、吐司、米饭',
+            '🚫 避免高脂肪、高纤维食物（肠胃会不舒服）',
+            '💧 提前2小时喝500ml水',
+            '⏰ 如果只有30–60分钟，只吃一小块香蕉或能量胶就够了',
+          ],
+        },
+        {
+          heading: '跑后营养窗口（30分钟内）',
+          text: '跑步后30分钟是"营养黄金窗口"——肌肉吸收营养的效率最高。<br><br><strong>理想搭配：碳水 + 蛋白质（3:1比例）</strong><br>例如：牛奶+香蕉、希腊酸奶+水果、鸡蛋+米饭',
+        },
+        {
+          heading: '跑步补水指南',
+          tips: [
+            '💧 跑前：提前2小时喝400–600ml水',
+            '🏃 跑中：每15–20分钟补充150–200ml（30分钟以内可不带水）',
+            '🥤 跑后：体重每减轻1kg，补充1.5L液体',
+            '🧂 1小时以上的跑步需要补充电解质（盐分、钾）',
+          ],
+        },
+        {
+          heading: '日常饮食建议',
+          text: '跑步日多摄入碳水（米饭、面食、地瓜），休息日可适当减少。蛋白质每天至少摄入体重×1.2g（60kg的人 = 72g蛋白质）。不需要特殊补剂，均衡饮食就够了。',
+        },
+      ],
+    },
+  },
+  {
+    week: 8, topic: '恢复的艺术', icon: '😴', color: '#a78bfa',
+    weeklyKm: '18–20 km',
+    sessions: [
+      { day: '周二', label: '轻松跑30分钟', desc: '这周稍微轻松一点，让身体超量恢复', duration: 40, type: 'run' },
+      { day: '周五', label: '轻松跑30分钟', desc: '同上，全程保持轻松对话心率', duration: 40, type: 'run' },
+      { day: '周日', label: '轻松跑30分钟', desc: '享受跑步，感受8周以来的进步', duration: 40, type: 'run' },
+      { day: '其余天', label: '主动恢复', desc: '散步、游泳或轻松骑车', type: 'rest' },
+    ],
+    knowledge: {
+      title: '恢复：进步真正发生的时刻',
+      summary: '跑步时你在破坏身体，休息时身体才在变强。恢复不是偷懒，是训练的一部分。',
+      sections: [
+        {
+          heading: '超量恢复原理',
+          text: '跑步→身体受到压力→休息期间修复→变得比之前更强。这个过程需要 <strong>48–72小时</strong>，这就是为什么不应该每天高强度训练。',
+        },
+        {
+          heading: '主动恢复 vs 完全休息',
+          tips: [
+            '🚶 主动恢复：散步20分钟、轻松游泳、骑自行车、瑜伽',
+            '🧘 效果：促进血液循环，加速乳酸代谢，比躺着更有效',
+            '🛌 完全休息：当感到特别疲惫、有受伤迹象时选择',
+          ],
+        },
+        {
+          heading: '睡眠是最好的恢复工具',
+          text: '生长激素在深度睡眠时大量分泌，它是肌肉修复的关键。研究表明，睡眠不足的运动员受伤率高60%。<br><br><strong>建议：每晚7–9小时，跑步后当天尤其重要。</strong>',
+        },
+        {
+          heading: '泡沫轴放松（Foam Rolling）',
+          tips: [
+            '🦵 重点滚压：小腿、髂胫束（大腿外侧）、股四头肌',
+            '⏱️ 每个部位60–90秒，找到酸点停留',
+            '⚠️ 不要直接滚压关节和骨骼',
+          ],
+        },
+      ],
+    },
+  },
+  {
+    week: 9, topic: '伤病预防', icon: '🩹', color: '#f43f5e',
+    weeklyKm: '20–22 km',
+    sessions: [
+      { day: '周二', label: '连续跑30分钟', desc: '稳定配速，感受身体有无不适', duration: 45, type: 'run' },
+      { day: '周四', label: '连续跑30分钟', desc: '稍微加快配速，感受Zone 3心率', duration: 45, type: 'run' },
+      { day: '周日', label: '连续跑35–40分钟', desc: '最长距离挑战，全程轻松配速', duration: 50, type: 'run' },
+      { day: '其余天', label: '休息+力量训练', desc: '深蹲、弓步等腿部力量训练15分钟', type: 'rest' },
+    ],
+    knowledge: {
+      title: '伤病预防：让你持续跑下去',
+      summary: '了解常见跑步伤病，在小问题变成大问题之前处理它。',
+      sections: [
+        {
+          heading: '最常见的4种跑步伤',
+          tips: [
+            '🦵 跑步膝（髂胫束综合征）— 大腿外侧/膝盖外侧疼痛，成因：过度训练、步幅过大',
+            '🦶 足底筋膜炎 — 脚跟疼痛，晨起最明显，成因：突然增加训练量',
+            '🦴 胫骨前疼痛（胫骨骨折） — 小腿前侧疼痛，成因：训练量增加太快',
+            '🔗 跟腱炎 — 脚后跟上方疼痛，成因：跑量突增、下坡跑太多',
+          ],
+        },
+        {
+          heading: '"好痛"vs"坏痛"',
+          text: '<strong>好痛（肌肉酸痛）：</strong>延迟性肌肉酸痛，跑后24–48小时出现，两侧对称，触摸有酸感但不剧烈。→ 可以继续训练。<br><br><strong>坏痛（受伤信号）：</strong>关节锐痛、跑步中越来越痛、单侧疼痛、走路也痛。→ 立即停止，冰敷，就医。',
+        },
+        {
+          heading: '10%增量原则',
+          text: '每周跑量增加不超过上周的 <strong>10%</strong>。这是预防过度使用伤的黄金法则。急于求成是新手受伤的头号原因。',
+        },
+        {
+          heading: '力量训练是最好的预防',
+          tips: [
+            '🏋️ 每周2次腿部力量训练（深蹲、单腿深蹲、弓步）',
+            '🌊 强化臀肌和核心，稳定跑步姿势',
+            '⚡ 强壮的肌肉保护关节',
+          ],
+        },
+      ],
+    },
+  },
+  {
+    week: 10, topic: '你的第一个5K', icon: '🏁', color: '#22c55e',
+    weeklyKm: '20–22 km',
+    sessions: [
+      { day: '周二', label: '轻松跑25分钟', desc: '轻松配速，保存体力', duration: 35, type: 'run' },
+      { day: '周四', label: '配速跑', desc: '热身10分钟 · 以比赛配速跑20分钟 · 冷身10分钟', duration: 45, type: 'run' },
+      { day: '周日', label: '🎯 5公里计时跑', desc: '你的第一次5公里计时！前2公里保守，后3公里加速', duration: 40, type: 'race' },
+      { day: '其余天', label: '休息', desc: '多休息，为周日比赛保存能量', type: 'rest' },
+    ],
+    knowledge: {
+      title: '5公里：终点线等着你',
+      summary: '10周的训练，就是为了今天。制定好策略，你一定能跑完！',
+      sections: [
+        {
+          heading: '赛前准备',
+          tips: [
+            '📅 赛前一周：减少30%跑量，让身体充分恢复',
+            '🍝 赛前晚餐：吃平时常吃的食物（不要尝试新食物！），多碳水',
+            '😴 赛前睡眠：比平时多睡1小时，赛前两晚的睡眠最关键',
+            '👟 穿已磨合好的跑鞋，不要穿新鞋参赛',
+          ],
+        },
+        {
+          heading: '比赛配速策略',
+          text: '前1–2公里：<strong>故意跑慢</strong>，比感觉舒适的配速再慢一点。很多人前面冲太快后面走着完赛。<br><br>中间2公里：找到节奏，维持稳定配速。<br><br>最后1公里：如果还有力气，开始加速，最后400米全力冲！',
+        },
+        {
+          heading: '完成5K后',
+          tips: [
+            '🎉 先庆祝！跑完5K是真正的里程碑',
+            '🍌 立即补充香蕉、运动饮料',
+            '🚶 缓慢步行10分钟冷身，不要立刻坐下',
+            '🛁 当天避免热水澡（冷水或温水），减少炎症',
+            '😴 好好睡一觉',
+          ],
+        },
+        {
+          heading: '下一步：你的跑步版图',
+          text: '完成5K只是开始！接下来你可以挑战：<br>• <strong>10K</strong>：再训练8周<br>• <strong>半程马拉松（21K）</strong>：再训练3–4个月<br>• <strong>马拉松（42K）</strong>：再训练6–12个月<br><br>报名真正的比赛，人群的氛围会让你跑出个人最好成绩！',
+        },
+      ],
+    },
+  },
+  {
+    week: 11, topic: '提升状态', icon: '📈', color: '#0ea5e9',
+    weeklyKm: '18–20 km',
+    sessions: [
+      { day: '周二', label: '轻松跑30分钟', desc: '保持状态，轻松配速', duration: 40, type: 'run' },
+      { day: '周四', label: '配速跑', desc: '热身10分钟 · 比赛配速跑25分钟 · 冷身10分钟', duration: 50, type: 'run' },
+      { day: '周日', label: '5K练习跑', desc: '轻松完成5公里，找到比赛感觉', duration: 40, type: 'run' },
+      { day: '其余天', label: '休息', desc: '可做力量训练', type: 'rest' },
+    ],
+    knowledge: {
+      title: '进阶训练：超越自己',
+      summary: '掌握基础之后，用这些方法突破瓶颈。',
+      sections: [
+        { heading: '间歇跑：最高效的提速方法', text: '格式：热身10分钟 · (快跑1分钟+慢跑2分钟)×5–8组 · 冷身10分钟。快跑时达到Zone 4–5，慢跑时恢复到Zone 2。每周只做一次间歇训练。' },
+        { heading: '节奏跑（Tempo Run）', text: '维持"舒适的难受"配速（Zone 3–4）持续20–40分钟。能说话，但每次只能说2–3个字。这是提升乳酸阈值最有效的训练。' },
+        { heading: '80/20训练法则', text: '职业跑者的训练：80%时间轻松跑（Zone 1–2），20%时间高强度（Zone 4–5）。大多数业余跑者恰恰相反，导致总是在中等强度疲惫地跑，进步反而慢。' },
+      ],
+    },
+  },
+  {
+    week: 12, topic: '比赛周 🏅', icon: '🏅', color: '#f59e0b',
+    weeklyKm: '12–15 km',
+    sessions: [
+      { day: '周二', label: '轻松跑20分钟', desc: '非常轻松，不要有压力', duration: 30, type: 'run' },
+      { day: '周四', label: '短距离激活', desc: '跑15分钟+4×100米加速跑（不是冲刺），激活肌肉', duration: 25, type: 'run' },
+      { day: '周六', label: '休息日', desc: '完全休息，准备好明天的5K！', duration: 0, type: 'rest' },
+      { day: '周日', label: '🎉 比赛日！5K全力跑', desc: '你已经准备好了。享受它，突破自己！', type: 'race' },
+    ],
+    knowledge: {
+      title: '比赛日：你已经准备好了',
+      summary: '12周的努力就是为了今天。相信训练，享受过程。',
+      sections: [
+        { heading: '比赛日时间轴', tips: ['⏰ 比赛前2小时：吃早餐（平时常吃的）', '⏰ 比赛前1小时：穿好装备，去熟悉场地', '⏰ 比赛前30分钟：动态热身10分钟', '⏰ 比赛前10分钟：站在起跑线附近，做深呼吸'] },
+        { heading: '心态调整', text: '紧张是正常的，甚至是好事——肾上腺素会让你跑得更好。把紧张感转化为兴奋感：<br><br>不要对自己说"我不能失败"，而是说"我来享受这12周努力的成果"。' },
+        { heading: '跑完5K之后', text: '恭喜你！你已经是一名真正的跑者了。🎉<br><br>你只用了12周，就完成了很多人一辈子都没做到的事。现在，下一个目标是什么？' },
+      ],
+    },
+  },
+];
+
+// ─── State ───────────────────────────────────────────
+let state = JSON.parse(localStorage.getItem('runstart_v1') || '{}');
+let selectedWeek = 1;
+let activeTab = 'training';
+
+function saveState() { localStorage.setItem('runstart_v1', JSON.stringify(state)); }
+
+function currentWeekNum() {
+  if (!state.startDate) return 1;
+  const start = new Date(state.startDate);
+  const now = new Date();
+  const diff = Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000));
+  return Math.max(1, Math.min(12, diff + 1));
+}
+
+function isUnlocked(week) {
+  return week <= currentWeekNum();
+}
+
+// ─── Setup ───────────────────────────────────────────
+function openSetup() {
+  const m = document.getElementById('setupModal');
+  m.classList.remove('hidden');
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('setupDate').value = state.startDate || today;
+  document.getElementById('setupName').value = state.name || '';
+  document.getElementById('setupAge').value = state.age || '';
+}
+
+function openSettings() { openSetup(); }
+
+function saveSetup() {
+  const name = document.getElementById('setupName').value.trim();
+  const date = document.getElementById('setupDate').value;
+  const age  = parseInt(document.getElementById('setupAge').value) || 28;
+  if (!date) { alert('请选择开始日期'); return; }
+  state = { ...state, name: name || '跑者', startDate: date, age };
+  saveState();
+  document.getElementById('setupModal').classList.add('hidden');
+  init();
+}
+
+// ─── Init ─────────────────────────────────────────────
+function init() {
+  if (!state.startDate) { openSetup(); return; }
+  document.getElementById('setupModal').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('navInfo').classList.remove('hidden');
+
+  const curWeek = currentWeekNum();
+  selectedWeek = curWeek;
+
+  // Hero
+  const names = { '周一': 'Mon', '周三': 'Wed', '周六': 'Sat' };
+  document.getElementById('heroGreet').textContent = `第${curWeek}周 · ${state.name || '跑者'}，加油！`;
+  document.getElementById('heroSub').textContent = `12周后你将完成人生第一个5公里 · 已坚持 ${curWeek - 1} 周`;
+  document.getElementById('navWeekBadge').textContent = `第${curWeek}周`;
+
+  // Progress
+  const pct = Math.round(((curWeek - 1) / 12) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('statWeek').textContent = curWeek;
+  document.getElementById('statDays').textContent = Math.max(0, 84 - (curWeek - 1) * 7);
+
+  // Cumulative km estimate
+  const kmPerWeek = [7, 9, 11, 13, 15, 17, 19, 19, 21, 21, 19, 13];
+  let totalKm = 0;
+  for (let i = 0; i < curWeek - 1; i++) totalKm += kmPerWeek[i] || 0;
+  document.getElementById('statKm').textContent = totalKm;
+
+  renderRoadmap();
+  renderContent();
+}
+
+// ─── Roadmap ──────────────────────────────────────────
+function renderRoadmap() {
+  const curWeek = currentWeekNum();
+  const container = document.getElementById('weekRoadmap');
+  container.innerHTML = '';
+  PLAN.forEach(w => {
+    const done = w.week < curWeek;
+    const cur  = w.week === curWeek;
+    const sel  = w.week === selectedWeek;
+    const cls  = done ? 'done' : cur ? 'current' : 'future';
+    const div = document.createElement('div');
+    div.className = `week-pill ${cls} ${sel ? 'active' : ''} flex flex-col items-center gap-1`;
+    div.onclick = () => selectWeek(w.week);
+    div.innerHTML = `
+      <div class="dot ${cur && sel ? 'pulse' : ''}">
+        ${done ? '✓' : w.week}
+      </div>
+      <span class="text-center leading-tight" style="font-size:9px;color:${sel ? 'var(--green)' : 'var(--gray)'}">
+        ${w.icon}<br>${w.topic.split('与')[0].split('的')[0].slice(0,4)}
+      </span>`;
+    container.appendChild(div);
+  });
+}
+
+function selectWeek(week) {
+  selectedWeek = week;
+  renderRoadmap();
+  renderContent();
+  // scroll to content
+  document.getElementById('panel-' + activeTab).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─── Tabs ─────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  ['training','knowledge','plan'].forEach(t => {
+    document.getElementById('panel-' + t).classList.toggle('hidden', t !== tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  renderContent();
+}
+
+// ─── Content ──────────────────────────────────────────
+function renderContent() {
+  renderTraining();
+  renderKnowledge();
+  renderPlan();
+}
+
+function renderTraining() {
+  const w = PLAN[selectedWeek - 1];
+  const unlocked = isUnlocked(w.week);
+  const curWeek = currentWeekNum();
+  let html = '';
+
+  html += `<div class="glass rounded-2xl p-5 mb-4 fade-up">
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">${w.icon}</span>
+        <div>
+          <p class="font-black text-base">第 ${w.week} 周训练计划</p>
+          <p class="text-xs" style="color:var(--gray)">本周目标跑量：${w.weeklyKm}</p>
+        </div>
+      </div>
+      <span class="badge ${w.week < curWeek ? 'badge-green' : w.week === curWeek ? 'badge-orange' : 'badge-gray'}">
+        ${w.week < curWeek ? '已完成' : w.week === curWeek ? '进行中' : '未开始'}
+      </span>
+    </div>
+  </div>`;
+
+  if (!unlocked) {
+    const d = new Date(state.startDate);
+    d.setDate(d.getDate() + (w.week - 1) * 7);
+    html += `<div class="glass rounded-2xl p-6 text-center fade-up">
+      <div class="text-3xl mb-2">🔒</div>
+      <p class="font-bold mb-1">第 ${w.week} 周尚未开始</p>
+      <p class="text-sm" style="color:var(--gray)">${d.getMonth()+1}月${d.getDate()}日解锁</p>
+    </div>`;
+  } else {
+    w.sessions.forEach(s => {
+      const isRace = s.type === 'race';
+      const isRest = s.type === 'rest';
+      html += `<div class="session ${isRest ? 'rest' : ''} fade-up">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm"
+              style="background:${isRace ? 'rgba(249,115,22,.15)' : isRest ? 'rgba(255,255,255,.05)' : 'var(--green-dim)'}">
+              ${isRace ? '🏁' : isRest ? '💤' : '🏃'}
+            </div>
+            <div class="min-w-0">
+              <p class="font-bold text-sm">${s.day} <span class="font-normal" style="color:var(--gray)">· ${s.label}</span></p>
+              <p class="text-xs mt-0.5 leading-relaxed" style="color:var(--gray)">${s.desc}</p>
+            </div>
+          </div>
+          ${s.duration ? `<span class="text-xs font-bold flex-shrink-0" style="color:${isRace ? 'var(--orange)' : 'var(--green)'}">${s.duration}min</span>` : ''}
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('trainingContent').innerHTML = html;
+}
+
+function renderKnowledge() {
+  const w = PLAN[selectedWeek - 1];
+  const unlocked = isUnlocked(w.week);
+  let html = '';
+
+  html += `<div class="flex items-center gap-3 mb-4 fade-up">
+    <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl" style="background:${w.color}22; border:1px solid ${w.color}44">${w.icon}</div>
+    <div>
+      <p class="font-black">${w.knowledge.title}</p>
+      <p class="text-xs mt-0.5" style="color:var(--gray)">第 ${w.week} 周知识</p>
+    </div>
+  </div>`;
+
+  if (!unlocked) {
+    const d = new Date(state.startDate);
+    d.setDate(d.getDate() + (w.week - 1) * 7);
+    html += `<div class="glass rounded-2xl p-6 text-center locked-card fade-up">
+      <div class="text-3xl mb-2">🔒</div>
+      <p class="font-bold mb-1">第 ${w.week} 周知识尚未解锁</p>
+      <p class="text-sm" style="color:var(--gray)">${d.getMonth()+1}月${d.getDate()}日解锁</p>
+    </div>`;
+    document.getElementById('knowledgeContent').innerHTML = html;
+    return;
+  }
+
+  // Summary
+  html += `<div class="know-card glass rounded-2xl p-4 mb-4 fade-up">
+    <p class="text-sm leading-relaxed" style="color:#94a3b8">${w.knowledge.summary}</p>
+  </div>`;
+
+  // Sections
+  w.knowledge.sections.forEach((sec, i) => {
+    html += `<div class="glass rounded-2xl p-4 mb-3 fade-up" style="animation-delay:${i * 0.05}s">
+      <p class="font-black text-sm mb-3" style="color:var(--green)">${sec.heading}</p>`;
+
+    if (sec.zones) {
+      const age = state.age || 28;
+      const max = 220 - age;
+      html += `<div class="glass2 rounded-xl p-3 mb-3 text-center">
+        <p class="text-xs mb-1" style="color:var(--gray)">你的最大心率（${age}岁）</p>
+        <p class="text-3xl font-black accent">${max} <span class="text-base font-normal" style="color:var(--gray)">bpm</span></p>
+      </div>`;
+      sec.zones.forEach(z => {
+        const lo = Math.round(max * parseInt(z.pct) / 100);
+        const hi = Math.round(max * parseInt(z.pct.split('–')[1]) / 100);
+        html += `<div class="zone-bar mb-2" style="background:${z.color}22; border:1px solid ${z.color}33">
+          <div class="flex items-center gap-2 w-full">
+            <span style="color:${z.color};min-width:60px;font-size:11px">${z.z}</span>
+            <span class="flex-1 text-xs font-bold" style="color:var(--text)">${z.label}</span>
+            <span style="color:${z.color};font-size:11px;font-weight:700">${lo}–${hi}</span>
+          </div>
+        </div>
+        <p class="text-xs mb-3 pl-1" style="color:var(--gray)">${z.desc}</p>`;
+      });
+    } else if (sec.text) {
+      html += `<p class="text-sm leading-relaxed" style="color:#94a3b8">${sec.text}</p>`;
+    }
+
+    if (sec.tips) {
+      sec.tips.forEach(tip => {
+        html += `<div class="flex gap-2 mb-2 text-sm">
+          <span class="flex-shrink-0 mt-0.5">${tip.slice(0,2)}</span>
+          <span style="color:#94a3b8">${tip.slice(2)}</span>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+  });
+
+  document.getElementById('knowledgeContent').innerHTML = html;
+}
+
+function renderPlan() {
+  let html = '<div class="fade-up">';
+  html += `<p class="text-xs font-bold mb-4" style="color:var(--gray)">点击任意周次查看详情</p>`;
+  const curWeek = currentWeekNum();
+  PLAN.forEach(w => {
+    const done = w.week < curWeek;
+    const cur  = w.week === curWeek;
+    const sel  = w.week === selectedWeek;
+    html += `<div onclick="selectWeek(${w.week}); switchTab('training')"
+      class="glass rounded-2xl p-4 mb-2 cursor-pointer transition-all"
+      style="border-color:${sel ? 'rgba(34,197,94,.4)' : 'var(--border)'}">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"
+          style="background:${done ? 'var(--green)' : cur ? 'var(--green-dim)' : 'rgba(255,255,255,.05)'};
+                 color:${done ? '#000' : cur ? 'var(--green)' : 'var(--gray)'};
+                 border:2px solid ${done ? 'var(--green)' : cur ? 'var(--green)' : 'rgba(255,255,255,.08)'}">
+          ${done ? '✓' : w.week}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <p class="font-bold text-sm">${w.icon} 第${w.week}周 · ${w.topic}</p>
+          </div>
+          <p class="text-xs mt-0.5" style="color:var(--gray)">${w.weeklyKm} · ${w.sessions.filter(s=>s.type==='run'||s.type==='race').length}次训练</p>
+        </div>
+        <span class="badge ${done ? 'badge-green' : cur ? 'badge-orange' : 'badge-gray'} flex-shrink-0 text-xs">
+          ${done ? '完成' : cur ? '本周' : '待解锁'}
+        </span>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('planContent').innerHTML = html;
+}
+
+// ─── Boot ─────────────────────────────────────────────
+window.addEventListener('load', () => {
+  if (!state.startDate) {
+    document.getElementById('setupModal').classList.remove('hidden');
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('setupDate').value = today;
+  } else {
+    init();
+  }
+});
+</script>
+</body>
+</html>
