@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>跑起来 · 5周新手跑步计划</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, set, push, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
@@ -344,32 +345,21 @@
   </div>
 </div>
 
-<!-- ─── Share Modal ────────────────────────────────── -->
-<div id="shareModal" class="modal-bg hidden" onclick="if(event.target===this)closeShare()">
-  <div class="glass rounded-3xl p-7 mx-4 max-w-sm w-full fade-up">
-    <div class="flex items-center justify-between mb-5">
-      <h2 class="text-lg font-black">🏃 分享进度</h2>
-      <button onclick="closeShare()" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 text-xl" style="background:rgba(255,255,255,.07)">&times;</button>
+<!-- ─── Card Share Modal ───────────────────────────── -->
+<div id="cardShareModal" class="modal-bg hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="glass rounded-3xl p-6 mx-4 max-w-sm w-full fade-up">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-black text-base">📤 分享卡片</h2>
+      <button onclick="document.getElementById('cardShareModal').classList.add('hidden')" class="w-8 h-8 rounded-full flex items-center justify-center text-xl" style="background:rgba(255,255,255,.07);color:#64748b">&times;</button>
     </div>
-    <div id="shareCard" class="rounded-2xl p-5 mb-4" style="background:linear-gradient(135deg,rgba(34,197,94,0.12) 0%,rgba(249,115,22,0.08) 100%);border:1px solid rgba(34,197,94,0.2)">
-      <div class="flex items-center gap-3 mb-4">
-        <span class="text-3xl">🏃</span>
-        <div>
-          <p class="font-black text-base" id="shareTitle">第1周 · 跑起来</p>
-          <p class="text-xs" style="color:var(--gray)" id="shareSub">5周新手跑步计划</p>
-        </div>
-      </div>
-      <div class="grid grid-cols-3 gap-2 text-center mb-4" id="shareStats"></div>
-      <p class="text-xs text-center" style="color:var(--gray)" id="shareMsg"></p>
+    <img id="cardShareImg" class="w-full rounded-2xl mb-4" style="border:1px solid rgba(255,255,255,0.1)">
+    <div class="flex gap-2">
+      <button id="cardShareDownload" class="flex-1 font-black py-3 rounded-2xl active:scale-95 transition-transform text-sm" style="background:var(--green);color:#000">⬇ 下载图片</button>
+      <button onclick="document.getElementById('cardShareModal').classList.add('hidden')" class="px-5 py-3 text-sm font-bold rounded-2xl" style="color:var(--gray);background:rgba(255,255,255,0.06)">关闭</button>
     </div>
-    <button onclick="copyShareText()" class="w-full font-black py-3 rounded-2xl mb-2 active:scale-95 transition-transform" style="background:var(--green);color:#000">
-      复制分享文字
-    </button>
-    <button onclick="closeShare()" class="w-full py-2 text-sm font-bold rounded-xl" style="color:var(--gray);background:rgba(255,255,255,0.04)">
-      关闭
-    </button>
   </div>
 </div>
+
 
 <!-- ─── Nav ────────────────────────────────────────── -->
 <nav class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-5 py-3.5" style="background:rgba(8,13,23,.85); backdrop-filter:blur(16px); border-bottom:1px solid var(--border)">
@@ -1146,51 +1136,6 @@ function saveLog() {
   renderTraining();
 }
 
-// ─── Share log record ─────────────────────────────────
-function shareLog(ts) {
-  const l = (state.logs || []).find(x => x.ts === ts);
-  if (!l) return;
-  const name = state.name || '跑者';
-  const compMap = { full:'全程跑完', walk:'中途走了几步', cut:'提前结束了' };
-  const lines = [
-    `🏃 ${name} 的跑步记录`,
-    ``,
-    `📅 ${l.date}　第${l.week}周`,
-    l.distance ? `📍 跑了 ${l.distance} 公里` : '',
-    l.duration ? `⏱ 用时 ${l.duration} 分钟` : '',
-    l.rpe ? `💪 用力度 ${l.rpe}/10` : '',
-    l.completion ? `✅ ${compMap[l.completion] || l.completion}` : '',
-    l.breath ? `🌬 呼吸${l.breath}` : '',
-    l.leg ? `🦵 腿部${l.leg}` : '',
-    l.mood ? `心情 ${l.mood}` : '',
-    l.notes ? `\n"${l.notes}"` : '',
-    ``,
-    `跑起来！5周新手跑步计划 💪`,
-  ].filter(s => s !== '').join('\n');
-
-  const modal = document.getElementById('shareModal');
-  document.getElementById('shareTitle').textContent = `${name} · 第${l.week}周跑步记录`;
-  document.getElementById('shareSub').textContent = l.date;
-  document.getElementById('shareStats').innerHTML = `
-    <div><p class="text-xl font-black" style="color:var(--orange)">${l.distance || '—'}</p><p class="text-xs" style="color:var(--gray)">公里</p></div>
-    <div><p class="text-xl font-black accent">${l.duration || '—'}</p><p class="text-xs" style="color:var(--gray)">分钟</p></div>
-    <div><p class="text-xl font-black text-white">${l.mood || '—'}</p><p class="text-xs" style="color:var(--gray)">心情</p></div>`;
-  document.getElementById('shareMsg').textContent = l.notes ? `"${l.notes}"` : (l.completion ? compMap[l.completion] || '' : '');
-  modal._shareText = lines;
-  modal.classList.remove('hidden');
-}
-function closeShare() { document.getElementById('shareModal').classList.add('hidden'); }
-function copyShareText() {
-  const modal = document.getElementById('shareModal');
-  const text = modal._shareText || '';
-  navigator.clipboard?.writeText(text).then(() => {
-    const btn = event.target;
-    const orig = btn.textContent;
-    btn.textContent = '✓ 已复制！';
-    setTimeout(() => btn.textContent = orig, 2000);
-  });
-}
-function shareProgress() { /* nav button — no-op, share is per-log */ }
 
 // ─── Logout ───────────────────────────────────────────
 function logout() {
@@ -1463,7 +1408,7 @@ function renderTraining() {
             <div class="flex items-center gap-1.5">
               ${l.distance ? `<span class="badge badge-orange">${l.distance}km</span>` : ''}
               ${l.duration ? `<span class="badge badge-green">${l.duration}分钟</span>` : ''}
-              <button onclick="shareLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(34,197,94,.08);color:var(--green)">分享</button>
+              <button onclick="shareRunCard(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(34,197,94,.08);color:var(--green)">分享</button>
               <button onclick="editLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(255,255,255,.06);color:var(--gray)">编辑</button>
               <button onclick="deleteLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(239,68,68,.1);color:#ef4444">删除</button>
             </div>
@@ -1516,7 +1461,10 @@ function renderKnowledge() {
   // Sections
   w.knowledge.sections.forEach((sec, i) => {
     html += `<div class="glass rounded-2xl p-4 mb-3 fade-up" style="animation-delay:${i * 0.05}s">
-      <p class="font-black text-sm mb-3" style="color:var(--green)">${sec.heading}</p>`;
+      <div class="flex items-start justify-between gap-2 mb-3">
+        <p class="font-black text-sm leading-snug flex-1" style="color:var(--green)">${sec.heading}</p>
+        <button onclick="shareKnCard(${w.week},${i})" class="flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold active:scale-95 transition-transform" style="background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2)">分享</button>
+      </div>`;
 
     if (sec.zones) {
       const age = state.age || 28;
@@ -1707,6 +1655,186 @@ function renderCoachDash(users) {
     </div>`;
   });
   document.getElementById('coachList').innerHTML = html;
+}
+
+// ─── Share Card (Canvas) ──────────────────────────────
+const SITE_URL = 'https://huolahuola.github.io/running-plan/';
+
+function _ctxFont(ctx, size, weight, color) {
+  ctx.font = `${weight} ${size}px "PingFang SC","Helvetica Neue",sans-serif`;
+  ctx.fillStyle = color;
+}
+
+function _fillWrapped(ctx, text, x, y, maxW, lineH, maxLines) {
+  let line = '', count = 0;
+  for (let i = 0; i < text.length; i++) {
+    const test = line + text[i];
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line, x, y + count * lineH);
+      count++; line = text[i];
+      if (maxLines && count >= maxLines) { ctx.fillText(line + '…', x, y + count * lineH); return count + 1; }
+    } else { line = test; }
+  }
+  if (line) { ctx.fillText(line, x, y + count * lineH); count++; }
+  return count;
+}
+
+function _roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+async function _drawCardBase(ctx, W, H, accentColor) {
+  // Background
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#0d1526'); bg.addColorStop(1,'#080d17');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+  // Ambient glow
+  const glow = ctx.createRadialGradient(W*.55, 0, 0, W*.55, 0, H*.7);
+  glow.addColorStop(0, accentColor+'18'); glow.addColorStop(1,'transparent');
+  ctx.fillStyle = glow; ctx.fillRect(0,0,W,H);
+  // Header strip
+  ctx.fillStyle = '#111827'; ctx.fillRect(0,0,W,58);
+  ctx.fillStyle = accentColor; ctx.fillRect(0,0,W,3);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(0,58,W,1);
+}
+
+async function _drawQR(ctx, x, y, size) {
+  try {
+    const qc = document.createElement('canvas');
+    await QRCode.toCanvas(qc, SITE_URL, { width: size*2, margin:1, color:{ dark:'#22c55e', light:'#0a1020' } });
+    ctx.save();
+    _roundRect(ctx, x-5, y-5, size+10, size+10, 8);
+    ctx.clip();
+    ctx.fillStyle = '#0a1020'; ctx.fill();
+    ctx.drawImage(qc, x, y, size, size);
+    ctx.restore();
+  } catch(e) {}
+}
+
+function _drawFooter(ctx, W, H, PAD) {
+  const fy = H - 118;
+  ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(PAD, fy, W-PAD*2, 1);
+  const QS = 86;
+  _drawQR(ctx, W-PAD-QS, fy+14, QS);
+  _ctxFont(ctx, 13, 'bold', '#e2e8f0');
+  ctx.fillText('扫码查看完整课程', PAD, fy+32);
+  _ctxFont(ctx, 11, 'normal', '#475569');
+  ctx.fillText(SITE_URL, PAD, fy+52);
+  _ctxFont(ctx, 11, 'normal', '#334155');
+  ctx.fillText('🏃 跑起来 · 5周新手跑步计划', PAD, fy+70);
+}
+
+async function _buildCanvas(drawFn, W, H) {
+  const DPR = 2;
+  const cvs = document.createElement('canvas');
+  cvs.width = W*DPR; cvs.height = H*DPR;
+  const ctx = cvs.getContext('2d');
+  ctx.scale(DPR, DPR);
+  await drawFn(ctx, W, H);
+  return cvs;
+}
+
+function _showCardModal(cvs, filename) {
+  document.getElementById('cardShareImg').src = cvs.toDataURL('image/png');
+  document.getElementById('cardShareDownload').onclick = () => {
+    const a = document.createElement('a');
+    a.download = filename; a.href = cvs.toDataURL('image/png'); a.click();
+  };
+  document.getElementById('cardShareModal').classList.remove('hidden');
+}
+
+// Knowledge section → card
+async function shareKnCard(wk, si) {
+  const W = 800, H = 530, PAD = 46;
+  const w = PLAN[wk-1], sec = w.knowledge.sections[si];
+  const strip = s => s.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&');
+
+  const cvs = await _buildCanvas(async (ctx) => {
+    await _drawCardBase(ctx, W, H, w.color || '#22c55e');
+    // Header
+    _ctxFont(ctx, 15, 'bold', '#22c55e'); ctx.fillText('🏃 跑起来', PAD, 38);
+    _ctxFont(ctx, 13, 'normal', '#475569');
+    ctx.textAlign='right'; ctx.fillText(`第${wk}周 · ${w.topic}`, W-PAD, 38); ctx.textAlign='left';
+    // Section heading (large)
+    _ctxFont(ctx, 22, 'bold', w.color || '#22c55e');
+    const hLines = _fillWrapped(ctx, sec.heading, PAD, 93, W-PAD*2-155, 30, 2);
+    let y = 93 + hLines*30 + 16;
+    // Divider accent
+    ctx.fillStyle = (w.color||'#22c55e')+'40'; ctx.fillRect(PAD, y-8, 40, 2); y += 4;
+    // Content
+    _ctxFont(ctx, 15, 'normal', '#94a3b8');
+    if (sec.text) {
+      _fillWrapped(ctx, strip(sec.text), PAD, y, W-PAD*2-155, 24, 7);
+    } else if (sec.tips) {
+      sec.tips.slice(0,5).forEach(tip => {
+        const n = _fillWrapped(ctx, tip, PAD, y, W-PAD*2-155, 23, 2);
+        y += n*23 + 6;
+      });
+    } else if (sec.zones) {
+      _ctxFont(ctx, 14, 'normal', '#64748b');
+      ctx.fillText('Zone 1–5 心率区间详见完整课程 ↗', PAD, y);
+    } else if (sec.table) {
+      _ctxFont(ctx, 14, 'normal', '#64748b');
+      ctx.fillText('5K/10K/半马/全马配速参考表详见完整课程 ↗', PAD, y);
+    }
+    await _drawFooter(ctx, W, H, PAD);
+  }, W, H);
+
+  _showCardModal(cvs, `跑步知识_第${wk}周_${sec.heading.slice(0,8)}.png`);
+}
+
+// Run log → card
+async function shareRunCard(ts) {
+  const l = (state.logs||[]).find(x=>x.ts===ts);
+  if (!l) return;
+  const name = state.name || '跑者';
+  const W = 800, H = 500, PAD = 46;
+  const compMap = { full:'全程跑完 ✅', walk:'中途走了几步', cut:'提前结束了' };
+
+  const cvs = await _buildCanvas(async (ctx) => {
+    await _drawCardBase(ctx, W, H, '#22c55e');
+    // Header
+    _ctxFont(ctx, 15, 'bold', '#22c55e'); ctx.fillText('🏃 跑起来', PAD, 38);
+    _ctxFont(ctx, 13, 'normal', '#475569');
+    ctx.textAlign='right'; ctx.fillText(`第${l.week}周 · ${l.date}`, W-PAD, 38); ctx.textAlign='left';
+    // Name
+    _ctxFont(ctx, 20, 'bold', '#f1f5f9');
+    ctx.fillText(`${name} 的跑步记录`, PAD, 95);
+    // Stats grid
+    const stats = [
+      l.distance ? [l.distance+'km','距离','#f97316'] : null,
+      l.duration ? [l.duration+'min','时长','#22c55e'] : null,
+      l.rpe ? [`RPE ${l.rpe}`,'用力度','#8b5cf6'] : null,
+      l.mood ? [l.mood,'心情','#f1f5f9'] : null,
+    ].filter(Boolean);
+    const bW = 140, bH = 68, bGap = 16;
+    stats.forEach((s, i) => {
+      const bx = PAD + i*(bW+bGap), by = 118;
+      ctx.fillStyle = s[2]+'18'; _roundRect(ctx,bx,by,bW,bH,10); ctx.fill();
+      ctx.strokeStyle = s[2]+'40'; ctx.lineWidth=1; ctx.stroke();
+      _ctxFont(ctx, 20, 'bold', s[2]); ctx.fillText(s[0], bx+14, by+30);
+      _ctxFont(ctx, 11, 'normal', '#64748b'); ctx.fillText(s[1], bx+14, by+52);
+    });
+    let y = 210;
+    if (l.completion) { _ctxFont(ctx,14,'normal','#94a3b8'); ctx.fillText(compMap[l.completion]||l.completion, PAD, y); y+=26; }
+    if (l.breath)     { _ctxFont(ctx,14,'normal','#94a3b8'); ctx.fillText(`🌬 呼吸${l.breath}`, PAD, y); y+=26; }
+    if (l.leg)        { _ctxFont(ctx,14,'normal','#94a3b8'); ctx.fillText(`🦵 腿部${l.leg}`, PAD, y); y+=26; }
+    if (l.notes) {
+      y += 4;
+      _ctxFont(ctx, 15, 'normal', '#cbd5e1');
+      ctx.fillStyle = 'rgba(255,255,255,0.04)'; _roundRect(ctx, PAD, y, W-PAD*2-155, 56, 10); ctx.fill();
+      _ctxFont(ctx, 15, 'normal', '#cbd5e1');
+      _fillWrapped(ctx, `"${l.notes}"`, PAD+14, y+22, W-PAD*2-155-28, 24, 2);
+    }
+    await _drawFooter(ctx, W, H, PAD);
+  }, W, H);
+
+  _showCardModal(cvs, `跑步记录_第${l.week}周_${l.date.replace('/','')}.png`);
 }
 
 // ─── Boot ─────────────────────────────────────────────
