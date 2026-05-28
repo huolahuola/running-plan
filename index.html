@@ -96,8 +96,8 @@
     /* Lightsaber reveal */
     @keyframes saberGlow {
       0%   { box-shadow: none; border-color: rgba(249,115,22,0.4); }
-      20%  { box-shadow: 0 0 32px 6px rgba(249,115,22,.65), 0 0 70px 20px rgba(255,190,60,.25), inset 0 0 20px rgba(249,115,22,.12); border-color: rgba(249,115,22,1); }
-      55%  { box-shadow: 0 0 14px 2px rgba(249,115,22,.3); border-color: rgba(249,115,22,.75); }
+      15%  { box-shadow: 0 0 36px 8px rgba(249,115,22,.7), 0 0 80px 24px rgba(255,190,60,.3), inset 0 0 24px rgba(249,115,22,.15); border-color: rgba(249,115,22,1); }
+      45%  { box-shadow: none; border-color: rgba(249,115,22,0.4); }
       100% { box-shadow: none; border-color: rgba(249,115,22,0.4); }
     }
     @keyframes saberOpen {
@@ -371,7 +371,6 @@
   </div>
   <div id="navInfo" class="hidden flex items-center gap-2">
     <span id="navWeekBadge" class="badge badge-green">第1周</span>
-    <button onclick="shareProgress()" class="text-xs px-3 py-1.5 rounded-full font-bold" style="background:rgba(34,197,94,0.1);color:var(--green)">分享</button>
     <button onclick="openSettings()" class="text-xs px-3 py-1.5 rounded-full font-bold" style="background:rgba(255,255,255,0.06);color:var(--gray)">设置</button>
     <button onclick="logout()" class="text-xs px-2 py-1.5 rounded-full font-bold" style="background:rgba(255,255,255,0.04);color:var(--gray)" title="退出">⏏</button>
   </div>
@@ -1135,29 +1134,42 @@ function saveLog() {
   renderTraining();
 }
 
-// ─── Share ────────────────────────────────────────────
-function shareProgress() {
-  const curWeek = currentWeekNum();
-  const totalLogs = (state.logs || []).length;
-  const doneSess = (state.doneSessions || []).length;
+// ─── Share log record ─────────────────────────────────
+function shareLog(ts) {
+  const l = (state.logs || []).find(x => x.ts === ts);
+  if (!l) return;
   const name = state.name || '跑者';
-  document.getElementById('shareTitle').textContent = `第${curWeek}周 · ${name}`;
+  const compMap = { full:'全程跑完', walk:'中途走了几步', cut:'提前结束了' };
+  const lines = [
+    `🏃 ${name} 的跑步记录`,
+    ``,
+    `📅 ${l.date}　第${l.week}周`,
+    l.duration ? `⏱ 跑了 ${l.duration} 分钟` : '',
+    l.rpe ? `💪 用力度 ${l.rpe}/10` : '',
+    l.completion ? `✅ ${compMap[l.completion] || l.completion}` : '',
+    l.breath ? `🌬 呼吸${l.breath}` : '',
+    l.leg ? `🦵 腿部${l.leg}` : '',
+    l.mood ? `心情 ${l.mood}` : '',
+    l.notes ? `\n"${l.notes}"` : '',
+    ``,
+    `跑起来！5周新手跑步计划 💪`,
+  ].filter(s => s !== '').join('\n');
+
+  const modal = document.getElementById('shareModal');
+  document.getElementById('shareTitle').textContent = `${name} · 第${l.week}周跑步记录`;
+  document.getElementById('shareSub').textContent = l.date;
   document.getElementById('shareStats').innerHTML = `
-    <div><p class="text-xl font-black accent">${curWeek}</p><p class="text-xs" style="color:var(--gray)">当前周次</p></div>
-    <div><p class="text-xl font-black" style="color:var(--orange)">${doneSess}</p><p class="text-xs" style="color:var(--gray)">完成训练</p></div>
-    <div><p class="text-xl font-black text-white">${totalLogs}</p><p class="text-xs" style="color:var(--gray)">跑后记录</p></div>`;
-  const msgs = [
-    '每一步都算数 💪', '坚持就是胜利 🔥', '跑步改变人生 ✨', '从今天开始不一样 🌟', '跑者精神，永不放弃 ⚡'
-  ];
-  document.getElementById('shareMsg').textContent = msgs[curWeek % msgs.length];
-  document.getElementById('shareModal').classList.remove('hidden');
+    <div><p class="text-xl font-black accent">${l.duration || '—'}</p><p class="text-xs" style="color:var(--gray)">分钟</p></div>
+    <div><p class="text-xl font-black" style="color:var(--orange)">${l.rpe || '—'}</p><p class="text-xs" style="color:var(--gray)">用力度</p></div>
+    <div><p class="text-xl font-black text-white">${l.mood || '—'}</p><p class="text-xs" style="color:var(--gray)">心情</p></div>`;
+  document.getElementById('shareMsg').textContent = l.notes ? `"${l.notes}"` : (l.completion ? compMap[l.completion] || '' : '');
+  modal._shareText = lines;
+  modal.classList.remove('hidden');
 }
 function closeShare() { document.getElementById('shareModal').classList.add('hidden'); }
 function copyShareText() {
-  const curWeek = currentWeekNum();
-  const name = state.name || '跑者';
-  const doneSess = (state.doneSessions || []).length;
-  const text = `🏃 ${name} 的跑步进度\n\n📅 第 ${curWeek} 周 / 共${TOTAL_WEEKS}周\n✅ 完成 ${doneSess} 次训练\n\n跑起来！5周新手跑步计划 💪`;
+  const modal = document.getElementById('shareModal');
+  const text = modal._shareText || '';
   navigator.clipboard?.writeText(text).then(() => {
     const btn = event.target;
     const orig = btn.textContent;
@@ -1165,6 +1177,7 @@ function copyShareText() {
     setTimeout(() => btn.textContent = orig, 2000);
   });
 }
+function shareProgress() { /* nav button — no-op, share is per-log */ }
 
 // ─── Logout ───────────────────────────────────────────
 function logout() {
@@ -1419,24 +1432,26 @@ function renderTraining() {
       </p>`;
     }
 
-    // Post-run tips: shown after saving a log
-    if (w.tips && _afterTipsWeek === w.week) {
+    // Past logs for this week
+    const logs = (state.logs || []).filter(l => l.week === w.week);
+
+    // Post-run tips: always visible once there's at least one log
+    if (w.tips && logs.length > 0) {
       html += `<div class="glass rounded-2xl p-4 mb-3 fade-up" style="border-left:3px solid var(--green)">
         <p class="font-black text-sm mb-3">🌟 跑完辛苦了！记得这几点</p>
         ${w.tips.after.map(t => `<div class="flex gap-2 mb-1.5 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#94a3b8">${t.slice(2)}</span></div>`).join('')}
       </div>`;
     }
 
-    // Past logs for this week
-    const logs = (state.logs || []).filter(l => l.week === w.week);
     if (logs.length) {
-      html += `<p class="text-xs font-bold mb-2 mt-4" style="color:var(--gray)">📒 本周记录（${logs.length}次）</p>`;
+      html += `<p class="text-xs font-bold mb-2 mt-1" style="color:var(--gray)">📒 本周记录（${logs.length}次）</p>`;
       logs.slice().reverse().forEach(l => {
         html += `<div class="glass2 rounded-xl p-3 mb-2 text-xs" style="color:#94a3b8">
           <div class="flex justify-between items-center mb-1">
             <span class="font-bold" style="color:var(--text)">${l.mood || ''} ${l.date}</span>
             <div class="flex items-center gap-1.5">
               ${l.duration ? `<span class="badge badge-green">${l.duration}分钟</span>` : ''}
+              <button onclick="shareLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(34,197,94,.08);color:var(--green)">分享</button>
               <button onclick="editLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(255,255,255,.06);color:var(--gray)">编辑</button>
               <button onclick="deleteLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(239,68,68,.1);color:#ef4444">删除</button>
             </div>
@@ -1509,8 +1524,8 @@ function renderKnowledge() {
         </div>
       </div>`;
       sec.zones.forEach(z => {
-        const lo = Math.round(max * parseInt(z.pct) / 100);
-        const hi = Math.round(max * parseInt(z.pct.split('–')[1]) / 100);
+        const lo = Math.round(maxTana * parseInt(z.pct) / 100);
+        const hi = Math.round(maxTana * parseInt(z.pct.split('–')[1]) / 100);
         html += `<div class="zone-bar mb-2" style="background:${z.color}22; border:1px solid ${z.color}33">
           <div class="flex items-center gap-2 w-full">
             <span style="color:${z.color};min-width:60px;font-size:11px">${z.z}</span>
