@@ -328,12 +328,9 @@ const PLAN = [
     week: 1, topic: '心率与跑步区间', icon: '❤️', color: '#ef4444',
     weeklyKm: '9–12 km',
     sessions: [
-      {
-        day: '每周3次（如周一/周三/周六）',
-        label: '2区心率慢跑 30分钟',
-        desc: '全程慢跑，不走路，不要求配速——只要求"跑得可控"。只要你能一边跑一边正常说话，配速就是对的。',
-        duration: 30, type: 'run',
-      },
+      { day: '第1次', label: '2区心率慢跑 30分钟', desc: '全程慢跑，不要求配速——只要求"跑得可控"。能一边跑一边正常说话，速度就是对的。', duration: 30, type: 'run', sessionId: 'w1s1' },
+      { day: '第2次', label: '2区心率慢跑 30分钟', desc: '和上次一样，注意感受心率和呼吸的变化。比第1次更放松了吗？', duration: 30, type: 'run', sessionId: 'w1s2' },
+      { day: '第3次', label: '2区心率慢跑 30分钟', desc: '本周最后一跑！跑完用"说话测试"回顾：全程都能说完整句子吗？', duration: 30, type: 'run', sessionId: 'w1s3' },
     ],
     concept: {
       title: '什么是"慢跑"？',
@@ -353,29 +350,43 @@ const PLAN = [
     },
     knowledge: {
       title: '心率区间：让数据指导你的每一步',
-      summary: '跑太快是新手最常犯的错误。心率数据能帮你找到最有效的训练节奏。',
+      summary: '跑太快是新手最常犯的错误。理解心率区间，你才能真正高效地训练。',
       sections: [
         {
-          heading: '最大心率怎么算？',
-          text: '公式：<strong>220 − 年龄 = 最大心率（HRmax）</strong><br>例如28岁：220−28 = 192 bpm。这是你心脏理论上能达到的最高跳动频率。',
+          heading: '最大心率怎么估算？',
+          text: '最常见公式是 <strong>220 − 年龄</strong>，但这只是一个粗略估算，误差可达 ±10–15 bpm，不同个体差异很大。<br><br>更准确的公式（Tanaka 公式，适合成年人）：<strong>208 − (0.7 × 年龄)</strong><br>例如28岁：208 − (0.7 × 28) = <strong>188 bpm</strong><br><br>⚠️ 任何公式都不如实测准确。真正的最大心率需要在实验室或全力测试中获得——新手不建议做最大心率测试，有一定心肺基础后再说。下面的区间数字仅供参考方向，不必纠结于精确值。',
         },
         {
           heading: '5个心率区间',
           zones: [
-            { z: 'Zone 1', pct: '50–60%', label: '超轻松', desc: '热身、冷身、恢复跑', color: '#3b82f6', w: 50 },
-            { z: 'Zone 2', pct: '60–70%', label: '有氧基础 ⭐', desc: '初学者的黄金区间，脂肪燃烧最高效，能轻松说话', color: '#22c55e', w: 65 },
-            { z: 'Zone 3', pct: '70–80%', label: '有氧进阶', desc: '稍微喘气，能说短句', color: '#eab308', w: 75 },
-            { z: 'Zone 4', pct: '80–90%', label: '乳酸阈值', desc: '较难说话，进阶跑者配速跑', color: '#f97316', w: 85 },
-            { z: 'Zone 5', pct: '90–100%', label: '无氧冲刺', desc: '无法说话，只能维持1–3分钟', color: '#ef4444', w: 95 },
+            { z: 'Zone 1', pct: '50–60%', label: '超轻松', desc: '热身、冷身、轻松散步', color: '#3b82f6', w: 50 },
+            { z: 'Zone 2', pct: '60–70%', label: '有氧基础 ⭐', desc: '脂肪燃烧最高效，线粒体增殖，能轻松说完整句子', color: '#22c55e', w: 65 },
+            { z: 'Zone 3', pct: '70–80%', label: '有氧进阶', desc: '稍微喘气，只能说短句，"灰色地带"——进步慢且消耗大', color: '#eab308', w: 75 },
+            { z: 'Zone 4', pct: '80–90%', label: '乳酸阈值', desc: '较难说话，提升乳酸阈值，适合进阶者配速跑', color: '#f97316', w: 85 },
+            { z: 'Zone 5', pct: '90–100%', label: '无氧冲刺', desc: '无法说话，只能维持30秒–3分钟，间歇训练用', color: '#ef4444', w: 95 },
           ],
         },
         {
-          heading: '初学者建议',
-          tips: ['✅ 80%的训练时间保持在Zone 2（有氧区间）', '✅ "会说话测试"：如果你能舒适地说完一个完整句子，你就在Zone 2', '✅ 感觉太慢是正常的！Zone 2训练初期会很慢，但这是打基础的关键', '⚠️ 避免每次都跑到气喘吁吁——这反而会减慢进步'],
+          heading: '为什么要把 80% 的训练时间放在 Zone 2？',
+          text: '这是来自精英运动员训练数据的发现，被称为"<strong>极化训练法（Polarized Training）</strong>"。<br><br>原因1：<strong>线粒体</strong>是肌肉细胞的"发动机"，Zone 2 是刺激线粒体增殖最有效的心率区间——训练久了，同样心率下你能跑得更快。<br><br>原因2：<strong>Zone 3 是陷阱</strong>。很多新手每次都在Zone 3跑（太累说不了长句，但又没到高强度），感觉很用力但进步很慢，而且身体恢复慢，容易累积疲劳受伤。<br><br>原因3：<strong>脂肪供能</strong>。Zone 2 时身体主要燃烧脂肪（高效、持久），Zone 3 以上开始大量消耗糖原（有限，消耗完就"撞墙"）。<br><br>✅ 实用建议：初学阶段几乎全部跑Zone 2。感觉"太慢了、太轻松了"——那就对了。',
         },
         {
-          heading: '本周实践',
-          text: '今天跑步时，每隔5分钟停下来感受一下心跳。能数到10秒内跳几下，乘以6就是你的bpm。目标是保持在最大心率的60–70%。',
+          heading: '各距离平均配速参考',
+          table: [
+            { dist: '5 公里', beg: '35–45 分钟', mid: '25–34 分钟', adv: '20–24 分钟', pace_beg: '7:00–9:00 /km', pace_mid: '5:00–6:50 /km', pace_adv: '4:00–4:59 /km' },
+            { dist: '10 公里', beg: '70–90 分钟', mid: '50–69 分钟', adv: '40–49 分钟', pace_beg: '7:00–9:00 /km', pace_mid: '5:00–6:50 /km', pace_adv: '4:00–4:59 /km' },
+            { dist: '半马 21K', beg: '2:30–3:15', mid: '1:50–2:29', adv: '1:30–1:49', pace_beg: '7:06–9:15 /km', pace_mid: '5:13–7:05 /km', pace_adv: '4:16–5:12 /km' },
+            { dist: '马拉松 42K', beg: '4:30–6:00', mid: '3:30–4:29', adv: '3:00–3:29', pace_beg: '6:23–8:32 /km', pace_mid: '4:58–6:22 /km', pace_adv: '4:16–4:57 /km' },
+          ],
+        },
+        {
+          heading: '初学者的心率建议',
+          tips: [
+            '✅ 全部跑在 Zone 2——感觉太慢是正常的，坚持就会越跑越快',
+            '✅ 没有心率表？用"说话测试"：能说完整句子 = Zone 2，能说短句 = Zone 3，说不了话 = Zone 4+',
+            '⚠️ 上坡时心率自然升高，这时可以放慢脚步甚至走路来维持 Zone 2',
+            '⚠️ 夏天跑步心率会比平时高5–10 bpm，对自己宽容一点',
+          ],
         },
       ],
     },
@@ -803,6 +814,17 @@ function isUnlocked(week) {
   return week <= currentWeekNum();
 }
 
+// ─── Mark session done ────────────────────────────────
+function markDone(sid, week) {
+  if ((state.doneSessions || []).includes(sid)) return;
+  state.doneSessions = state.doneSessions || [];
+  state.doneSessions.push(sid);
+  saveState();
+  renderTraining();
+  // auto-open log modal
+  setTimeout(() => openLog(week), 200);
+}
+
 // ─── Run Log ──────────────────────────────────────────
 let _logWeek = 1, _logRpe = null, _logComp = null, _logBreath = null, _logLeg = null, _logMood = null, _logPain = new Set();
 
@@ -1005,23 +1027,32 @@ function renderTraining() {
     }
 
     // Sessions
+    const doneSessions = new Set((state.doneSessions || []));
     w.sessions.forEach(s => {
       const isRace = s.type === 'race';
       const isRest = s.type === 'rest';
-      html += `<div class="session ${isRest ? 'rest' : ''} fade-up">
-        <div class="flex items-start justify-between gap-3">
+      const sid = s.sessionId || `w${w.week}_${s.day}`;
+      const done = doneSessions.has(sid);
+      html += `<div class="session ${isRest ? 'rest' : ''} fade-up" style="${done ? 'border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.05)' : ''}">
+        <div class="flex items-start justify-between gap-3 mb-${isRest ? '0' : '3'}">
           <div class="flex items-center gap-3 flex-1 min-w-0">
             <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm"
-              style="background:${isRace ? 'rgba(249,115,22,.15)' : isRest ? 'rgba(255,255,255,.05)' : 'var(--green-dim)'}">
-              ${isRace ? '🏁' : isRest ? '💤' : '🏃'}
+              style="background:${done ? 'var(--green)' : isRace ? 'rgba(249,115,22,.15)' : isRest ? 'rgba(255,255,255,.05)' : 'var(--green-dim)'}">
+              ${done ? '✓' : isRace ? '🏁' : isRest ? '💤' : '🏃'}
             </div>
             <div class="min-w-0">
-              <p class="font-bold text-sm">${s.day} <span class="font-normal" style="color:var(--gray)">· ${s.label}</span></p>
+              <p class="font-bold text-sm ${done ? 'line-through' : ''}" style="${done ? 'color:var(--gray)' : ''}">${s.day} <span class="font-normal">· ${s.label}</span></p>
               <p class="text-xs mt-0.5 leading-relaxed" style="color:var(--gray)">${s.desc}</p>
             </div>
           </div>
           ${s.duration ? `<span class="text-xs font-bold flex-shrink-0" style="color:${isRace ? 'var(--orange)' : 'var(--green)'}">${s.duration}min</span>` : ''}
         </div>
+        ${!isRest ? `<button onclick="markDone('${sid}', ${w.week})" class="w-full py-2.5 rounded-xl text-sm font-black active:scale-95 transition-transform"
+          style="${done
+            ? 'background:rgba(34,197,94,.1);color:var(--green);cursor:default'
+            : 'background:var(--card);border:1.5px solid rgba(34,197,94,.4);color:var(--green)'}">
+          ${done ? '✅ 已完成' : '俺练完嘞！🎉'}
+        </button>` : ''}
       </div>`;
     });
 
@@ -1106,10 +1137,20 @@ function renderKnowledge() {
 
     if (sec.zones) {
       const age = state.age || 28;
-      const max = 220 - age;
-      html += `<div class="glass2 rounded-xl p-3 mb-3 text-center">
-        <p class="text-xs mb-1" style="color:var(--gray)">你的最大心率（${age}岁）</p>
-        <p class="text-3xl font-black accent">${max} <span class="text-base font-normal" style="color:var(--gray)">bpm</span></p>
+      const max220  = 220 - age;
+      const maxTana = Math.round(208 - 0.7 * age);
+      html += `<div class="glass2 rounded-xl p-3 mb-3">
+        <p class="text-xs mb-2 text-center" style="color:var(--gray)">你的估算最大心率（${age}岁）</p>
+        <div class="grid grid-cols-2 gap-2 text-center">
+          <div>
+            <p class="text-2xl font-black accent">${max220}</p>
+            <p class="text-xs mt-0.5" style="color:var(--gray)">220−年龄</p>
+          </div>
+          <div>
+            <p class="text-2xl font-black" style="color:var(--orange)">${maxTana}</p>
+            <p class="text-xs mt-0.5" style="color:var(--gray)">Tanaka公式（更准）</p>
+          </div>
+        </div>
       </div>`;
       sec.zones.forEach(z => {
         const lo = Math.round(max * parseInt(z.pct) / 100);
@@ -1135,6 +1176,37 @@ function renderKnowledge() {
         </div>`;
       });
     }
+
+    if (sec.table) {
+      html += `<div class="overflow-x-auto -mx-1">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead>
+            <tr style="color:var(--gray)">
+              <th style="padding:6px 8px;text-align:left;font-weight:700">距离</th>
+              <th style="padding:6px 4px;text-align:center;font-weight:700;color:#94a3b8">入门</th>
+              <th style="padding:6px 4px;text-align:center;font-weight:700;color:var(--green)">进阶</th>
+              <th style="padding:6px 4px;text-align:center;font-weight:700;color:var(--orange)">精英业余</th>
+            </tr>
+          </thead>
+          <tbody>`;
+      sec.table.forEach((r, i) => {
+        html += `<tr style="border-top:1px solid var(--border);background:${i%2?'rgba(255,255,255,.02)':''}">
+          <td style="padding:8px;font-weight:700;color:var(--text)">${r.dist}</td>
+          <td style="padding:8px 4px;text-align:center;color:#94a3b8">
+            <div>${r.beg}</div><div style="color:var(--gray);font-size:10px">${r.pace_beg}</div>
+          </td>
+          <td style="padding:8px 4px;text-align:center;color:var(--green)">
+            <div>${r.mid}</div><div style="color:#4ade80;font-size:10px">${r.pace_mid}</div>
+          </td>
+          <td style="padding:8px 4px;text-align:center;color:var(--orange)">
+            <div>${r.adv}</div><div style="color:#fb923c;font-size:10px">${r.pace_adv}</div>
+          </td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>
+      <p class="text-xs mt-2" style="color:var(--gray)">⚠️ 参考值，实际因年龄/体能/性别/气候差异较大。入门 = 刚起步，进阶 = 训练6–12个月，精英业余 = 多年系统训练。</p>`;
+    }
+
     html += `</div>`;
   });
 
