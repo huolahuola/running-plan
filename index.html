@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>跑起来 · 12周新手跑步计划</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getDatabase, ref, set, push, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+    const FB = { apiKey:"AIzaSyDT6oh03xq_jwZVElEt86K2_RMcz5fskf8", authDomain:"ourworldcup2026.firebaseapp.com", databaseURL:"https://ourworldcup2026-default-rtdb.firebaseio.com", projectId:"ourworldcup2026", storageBucket:"ourworldcup2026.firebasestorage.app", messagingSenderId:"184495756656", appId:"1:184495756656:web:33c3bdcf5aa56a3e54ebb5" };
+    const app = initializeApp(FB);
+    window._db = getDatabase(app);
+    window._fbRef = ref; window._fbSet = set; window._fbPush = push; window._fbOnValue = onValue; window._fbGet = get;
+    window._fbReady = true;
+    document.dispatchEvent(new Event('fbready'));
+  </script>
   <style>
     :root {
       --green: #22c55e;
@@ -108,29 +118,98 @@
 </head>
 <body>
 
+<!-- ─── Coach View ──────────────────────────────────── -->
+<div id="coachView" class="hidden min-h-screen pt-16 px-4 pb-10 max-w-lg mx-auto">
+  <div id="coachLogin" class="hidden">
+    <div class="glass rounded-3xl p-8 mt-8 fade-up">
+      <div class="text-4xl text-center mb-3">👟</div>
+      <h2 class="text-xl font-black text-center mb-1">教练视角</h2>
+      <p class="text-center text-sm mb-5" style="color:var(--gray)">输入密码查看所有学员数据</p>
+      <input type="password" id="coachPwd" placeholder="教练密码" class="mb-3">
+      <button onclick="coachUnlock()" class="w-full font-black py-3.5 rounded-2xl text-black" style="background:var(--green)">进入 →</button>
+    </div>
+  </div>
+  <div id="coachDash" class="hidden">
+    <div class="flex items-center justify-between mb-5 pt-2">
+      <div>
+        <h2 class="text-xl font-black">📋 学员总览</h2>
+        <p class="text-xs mt-0.5" style="color:var(--gray)">实时同步</p>
+      </div>
+      <span id="coachCount" class="badge badge-green">0 人</span>
+    </div>
+    <div id="coachList"></div>
+  </div>
+</div>
+
 <!-- ─── Setup Modal ─────────────────────────────────── -->
 <div id="setupModal" class="modal-bg hidden">
   <div class="glass rounded-3xl p-8 mx-4 max-w-sm w-full fade-up">
-    <div class="text-4xl text-center mb-3">🏃</div>
-    <h2 class="text-2xl font-black text-center mb-1">你好，跑者！</h2>
-    <p class="text-center text-sm mb-6" style="color:var(--gray)">设置开始日期，解锁你的12周计划</p>
-    <div class="space-y-4">
-      <div>
-        <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">你的名字</label>
-        <input type="text" id="setupName" placeholder="例如：小雨" maxlength="12">
+
+    <!-- Panel 1: New user form -->
+    <div id="setupFormPanel">
+      <div class="text-4xl text-center mb-3">🏃</div>
+      <h2 class="text-2xl font-black text-center mb-1">你好，跑者！</h2>
+      <p class="text-center text-sm mb-6" style="color:var(--gray)">设置开始日期，解锁你的12周计划</p>
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">你的名字</label>
+          <input type="text" id="setupName" placeholder="例如：小雨" maxlength="12">
+        </div>
+        <div>
+          <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">第1周开始日期</label>
+          <input type="date" id="setupDate">
+        </div>
+        <div>
+          <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">你的年龄（用于计算心率）</label>
+          <input type="number" id="setupAge" placeholder="例如：28" min="15" max="70">
+        </div>
+        <button onclick="saveSetup()" class="w-full font-black py-3.5 rounded-2xl text-black text-base active:scale-95 transition-transform" style="background:var(--green)">
+          开始我的跑步之旅 →
+        </button>
+        <button onclick="showRecoverPanel()" class="w-full py-2 text-sm font-bold rounded-xl" style="color:var(--gray);background:rgba(255,255,255,0.04)">
+          已有进度，换设备了 →
+        </button>
       </div>
-      <div>
-        <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">第1周开始日期</label>
-        <input type="date" id="setupDate">
+    </div>
+
+    <!-- Panel 2: Recovery code display after first setup -->
+    <div id="setupCodePanel" class="hidden">
+      <div class="text-4xl text-center mb-3">🔑</div>
+      <h2 class="text-xl font-black text-center mb-2">保存你的恢复码</h2>
+      <p class="text-center text-sm mb-5" style="color:var(--gray)">换设备时用这个码找回你的进度</p>
+      <div class="rounded-2xl p-5 text-center mb-2" style="background:var(--green-dim);border:2px solid var(--green)">
+        <p class="text-3xl font-black tracking-widest accent" id="myRecoveryCode" style="letter-spacing:0.3em">------</p>
       </div>
-      <div>
-        <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">你的年龄（用于计算心率）</label>
-        <input type="number" id="setupAge" placeholder="例如：28" min="15" max="70">
-      </div>
-      <button onclick="saveSetup()" class="w-full font-black py-3.5 rounded-2xl text-black text-base active:scale-95 transition-transform" style="background:var(--green)">
-        开始我的跑步之旅 →
+      <p class="text-xs text-center mb-5" style="color:var(--gray)">📸 建议截图或记下来</p>
+      <button onclick="copyCode()" class="w-full py-2.5 rounded-xl text-sm font-bold mb-3" style="background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.3)">
+        复制恢复码
+      </button>
+      <button onclick="confirmCode()" class="w-full font-black py-3.5 rounded-2xl text-black text-base active:scale-95 transition-transform" style="background:var(--green)">
+        已保存，开始跑步 →
       </button>
     </div>
+
+    <!-- Panel 3: Recovery input -->
+    <div id="setupRecoverPanel" class="hidden">
+      <div class="text-4xl text-center mb-3">🔍</div>
+      <h2 class="text-xl font-black text-center mb-2">恢复我的进度</h2>
+      <p class="text-center text-sm mb-5" style="color:var(--gray)">输入你的6位恢复码</p>
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">恢复码（6位）</label>
+          <input type="text" id="recoveryCodeInput" placeholder="例如：A3K9PZ" maxlength="6"
+            oninput="this.value=this.value.toUpperCase()"
+            style="letter-spacing:0.25em;font-size:20px;text-align:center;font-weight:700">
+        </div>
+        <button onclick="recoverByCode()" class="w-full font-black py-3.5 rounded-2xl text-black text-base active:scale-95 transition-transform" style="background:var(--green)">
+          恢复进度 →
+        </button>
+        <button onclick="showSetupForm()" class="w-full py-2 text-sm font-bold rounded-xl" style="color:var(--gray);background:rgba(255,255,255,0.04)">
+          ← 新建计划
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -328,9 +407,7 @@ const PLAN = [
     week: 1, topic: '心率与跑步区间', icon: '❤️', color: '#ef4444',
     weeklyKm: '9–12 km',
     sessions: [
-      { day: '第1次', label: '2区心率慢跑 30分钟', desc: '全程慢跑，不要求配速——只要求"跑得可控"。能一边跑一边正常说话，速度就是对的。', duration: 30, type: 'run', sessionId: 'w1s1' },
-      { day: '第2次', label: '2区心率慢跑 30分钟', desc: '和上次一样，注意感受心率和呼吸的变化。比第1次更放松了吗？', duration: 30, type: 'run', sessionId: 'w1s2' },
-      { day: '第3次', label: '2区心率慢跑 30分钟', desc: '本周最后一跑！跑完用"说话测试"回顾：全程都能说完整句子吗？', duration: 30, type: 'run', sessionId: 'w1s3' },
+      { day: '本周任意一天', label: '2区心率慢跑 30分钟', desc: '全程慢跑，不要求配速——只要求"跑得可控"。能一边跑一边正常说话，速度就是对的。跑完记录感受！', duration: 30, type: 'run', sessionId: 'w1s1' },
     ],
     concept: {
       title: '什么是"慢跑"？',
@@ -802,6 +879,41 @@ let activeTab = 'training';
 
 function saveState() { localStorage.setItem('runstart_v1', JSON.stringify(state)); }
 
+// ─── Firebase helpers ─────────────────────────────────
+function fbReady() { return !!window._db; }
+
+function uid() {
+  if (!state.uid) {
+    state.uid = Math.random().toString(36).slice(2, 8).toUpperCase();
+    saveState();
+  }
+  return state.uid;
+}
+
+function fbUserRef(path) {
+  return window._fbRef(window._db, `runplan/users/${uid()}/${path}`);
+}
+
+async function fbSyncProfile() {
+  if (!fbReady()) return;
+  await window._fbSet(fbUserRef('profile'), {
+    name: state.name || '跑者',
+    age: state.age || 28,
+    startDate: state.startDate,
+    updatedAt: Date.now(),
+  });
+}
+
+async function fbSyncDoneSessions() {
+  if (!fbReady()) return;
+  await window._fbSet(fbUserRef('doneSessions'), state.doneSessions || []);
+}
+
+async function fbPushLog(entry) {
+  if (!fbReady()) return;
+  await window._fbPush(fbUserRef('logs'), entry);
+}
+
 function currentWeekNum() {
   if (!state.startDate) return 1;
   const start = new Date(state.startDate);
@@ -814,14 +926,17 @@ function isUnlocked(week) {
   return week <= currentWeekNum();
 }
 
+// ─── After-tips state ────────────────────────────────
+let _afterTipsWeek = null;
+
 // ─── Mark session done ────────────────────────────────
 function markDone(sid, week) {
   if ((state.doneSessions || []).includes(sid)) return;
   state.doneSessions = state.doneSessions || [];
   state.doneSessions.push(sid);
   saveState();
+  fbSyncDoneSessions();
   renderTraining();
-  // auto-open log modal
   setTimeout(() => openLog(week), 200);
 }
 
@@ -875,16 +990,70 @@ function saveLog() {
   const now = new Date();
   const date = `${now.getMonth()+1}/${now.getDate()}`;
   const entry = { week: _logWeek, date, duration: dur, rpe: _logRpe, completion: _logComp,
-    breath: _logBreath, leg: _logLeg, mood: _logMood, pain: [..._logPain], notes, ts: Date.now() };
+    breath: _logBreath, leg: _logLeg, mood: _logMood, pain: [..._logPain], notes,
+    ts: Date.now(), userName: state.name || '跑者' };
   state.logs = state.logs || [];
   state.logs.push(entry);
   saveState();
+  fbPushLog(entry);
+  _afterTipsWeek = _logWeek;
   closeLog();
   renderTraining();
 }
 
+// ─── Setup panels ────────────────────────────────────
+function showSetupForm() {
+  document.getElementById('setupFormPanel').classList.remove('hidden');
+  document.getElementById('setupCodePanel').classList.add('hidden');
+  document.getElementById('setupRecoverPanel').classList.add('hidden');
+}
+function showRecoverPanel() {
+  document.getElementById('setupFormPanel').classList.add('hidden');
+  document.getElementById('setupCodePanel').classList.add('hidden');
+  document.getElementById('setupRecoverPanel').classList.remove('hidden');
+  document.getElementById('recoveryCodeInput').value = '';
+}
+function confirmCode() {
+  document.getElementById('setupModal').classList.add('hidden');
+  showSetupForm();
+  init();
+}
+function copyCode() {
+  const code = document.getElementById('myRecoveryCode').textContent;
+  navigator.clipboard?.writeText(code).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ 已复制！';
+    setTimeout(() => btn.textContent = '复制恢复码', 2000);
+  });
+}
+async function recoverByCode() {
+  if (!fbReady()) { alert('网络连接中，请稍后再试'); return; }
+  const code = document.getElementById('recoveryCodeInput').value.trim().toUpperCase();
+  if (code.length < 6) { alert('请输入完整的6位恢复码'); return; }
+  try {
+    const profileSnap = await window._fbGet(window._fbRef(window._db, `runplan/users/${code}/profile`));
+    if (!profileSnap.exists()) { alert('找不到该恢复码，请确认是否正确'); return; }
+    const profile = profileSnap.val();
+    const sessSnap = await window._fbGet(window._fbRef(window._db, `runplan/users/${code}/doneSessions`));
+    state = {
+      uid: code,
+      name: profile.name,
+      startDate: profile.startDate,
+      age: profile.age,
+      doneSessions: sessSnap.exists() ? sessSnap.val() : [],
+    };
+    saveState();
+    document.getElementById('setupModal').classList.add('hidden');
+    showSetupForm();
+    init();
+  } catch(e) {
+    alert('恢复失败，请检查网络连接后重试');
+  }
+}
+
 // ─── Setup ───────────────────────────────────────────
 function openSetup() {
+  showSetupForm();
   const m = document.getElementById('setupModal');
   m.classList.remove('hidden');
   const today = new Date().toISOString().split('T')[0];
@@ -900,10 +1069,19 @@ function saveSetup() {
   const date = document.getElementById('setupDate').value;
   const age  = parseInt(document.getElementById('setupAge').value) || 28;
   if (!date) { alert('请选择开始日期'); return; }
+  const isNew = !state.startDate;
   state = { ...state, name: name || '跑者', startDate: date, age };
   saveState();
-  document.getElementById('setupModal').classList.add('hidden');
-  init();
+  fbSyncProfile();
+  if (isNew) {
+    // show recovery code for new users
+    document.getElementById('myRecoveryCode').textContent = uid();
+    document.getElementById('setupFormPanel').classList.add('hidden');
+    document.getElementById('setupCodePanel').classList.remove('hidden');
+  } else {
+    document.getElementById('setupModal').classList.add('hidden');
+    init();
+  }
 }
 
 // ─── Init ─────────────────────────────────────────────
@@ -964,6 +1142,7 @@ function renderRoadmap() {
 }
 
 function selectWeek(week) {
+  _afterTipsWeek = null;
   selectedWeek = week;
   renderRoadmap();
   renderContent();
@@ -1056,14 +1235,23 @@ function renderTraining() {
       </div>`;
     });
 
-    // Tips card
+    // Pre-run tips: collapsible "跑前锦囊"
     if (w.tips) {
       html += `<div class="glass rounded-2xl p-4 mb-3 fade-up">
-        <p class="font-black text-sm mb-3">🎒 每次跑步的小提示</p>
-        <p class="text-xs font-bold mb-2" style="color:var(--orange)">跑前</p>
-        ${w.tips.before.map(t => `<div class="flex gap-2 mb-1.5 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#94a3b8">${t.slice(2)}</span></div>`).join('')}
-        <div class="my-3" style="height:1px;background:var(--border)"></div>
-        <p class="text-xs font-bold mb-2" style="color:var(--green)">跑后</p>
+        <button onclick="var el=document.getElementById('tips${w.week}');el.classList.toggle('hidden');this.querySelector('.chev').style.transform=el.classList.contains('hidden')?'':'rotate(180deg)'" class="w-full flex items-center justify-between">
+          <span class="font-black text-sm">🎒 跑前锦囊</span>
+          <span class="chev text-base transition-transform" style="color:var(--orange);display:inline-block">▾</span>
+        </button>
+        <div id="tips${w.week}" class="hidden mt-3">
+          ${w.tips.before.map(t => `<div class="flex gap-2 mb-1.5 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#94a3b8">${t.slice(2)}</span></div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    // Post-run tips: shown after saving a log
+    if (w.tips && _afterTipsWeek === w.week) {
+      html += `<div class="glass rounded-2xl p-4 mb-3 fade-up" style="border-left:3px solid var(--green)">
+        <p class="font-black text-sm mb-3">🌟 跑完辛苦了！记得这几点</p>
         ${w.tips.after.map(t => `<div class="flex gap-2 mb-1.5 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#94a3b8">${t.slice(2)}</span></div>`).join('')}
       </div>`;
     }
@@ -1247,13 +1435,104 @@ function renderPlan() {
   document.getElementById('planContent').innerHTML = html;
 }
 
+// ─── Coach View ───────────────────────────────────────
+const COACH_PWD = 'coach2026';
+
+function coachUnlock() {
+  if (document.getElementById('coachPwd').value === COACH_PWD) {
+    document.getElementById('coachLogin').classList.add('hidden');
+    document.getElementById('coachDash').classList.remove('hidden');
+    loadCoachData();
+  } else {
+    alert('密码错误');
+  }
+}
+
+function loadCoachData() {
+  if (!fbReady()) { setTimeout(loadCoachData, 500); return; }
+  window._fbOnValue(window._fbRef(window._db, 'runplan/users'), snap => {
+    const users = snap.exists() ? snap.val() : {};
+    renderCoachDash(users);
+  });
+}
+
+function renderCoachDash(users) {
+  const entries = Object.entries(users);
+  document.getElementById('coachCount').textContent = entries.length + ' 人';
+  if (!entries.length) {
+    document.getElementById('coachList').innerHTML = `<p class="text-center py-10" style="color:var(--gray)">暂无学员数据</p>`;
+    return;
+  }
+  let html = '';
+  entries.forEach(([uid, u]) => {
+    const p = u.profile || {};
+    const logs = u.logs ? Object.values(u.logs).sort((a,b) => b.ts - a.ts) : [];
+    const done = u.doneSessions ? (Array.isArray(u.doneSessions) ? u.doneSessions : Object.values(u.doneSessions)).length : 0;
+    const latest = logs[0];
+    const startDate = p.startDate ? new Date(p.startDate) : null;
+    const weekNum = startDate ? Math.max(1, Math.min(12, Math.floor((Date.now()-startDate)/(7*24*3600*1000))+1)) : '—';
+    html += `<div class="glass rounded-2xl p-4 mb-3">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm" style="background:var(--green-dim);color:var(--green)">
+            ${(p.name||'?')[0].toUpperCase()}
+          </div>
+          <div>
+            <p class="font-black">${p.name || '未知'}</p>
+            <p class="text-xs" style="color:var(--gray)">第${weekNum}周 · 已完成${done}次课 · ${p.age||'?'}岁</p>
+          </div>
+        </div>
+        <span class="badge badge-green">${logs.length}条记录</span>
+      </div>
+      ${latest ? `<div class="glass2 rounded-xl p-3 mb-2">
+        <p class="text-xs font-bold mb-1.5" style="color:var(--green)">最新记录 ${latest.date}</p>
+        <div class="flex gap-2 flex-wrap mb-1.5">
+          ${latest.duration ? `<span class="badge badge-gray">${latest.duration}分钟</span>` : ''}
+          ${latest.rpe ? `<span class="badge badge-gray">RPE ${latest.rpe}/10</span>` : ''}
+          ${latest.mood ? `<span class="badge badge-gray">${latest.mood}</span>` : ''}
+          ${latest.completion ? `<span class="badge badge-gray">${{full:'全程完成',walk:'中途走了',cut:'提前结束'}[latest.completion]||latest.completion}</span>` : ''}
+          ${latest.breath ? `<span class="badge badge-gray">呼吸${latest.breath}</span>` : ''}
+          ${latest.leg ? `<span class="badge badge-gray">腿${latest.leg}</span>` : ''}
+        </div>
+        ${latest.notes ? `<p class="text-xs italic" style="color:#94a3b8">"${latest.notes}"</p>` : ''}
+      </div>` : `<p class="text-xs" style="color:var(--gray)">尚未有跑后记录</p>`}
+      ${logs.length > 1 ? `<details class="mt-1">
+        <summary class="text-xs font-bold cursor-pointer" style="color:var(--gray)">查看全部 ${logs.length} 条记录</summary>
+        <div class="mt-2 space-y-2">
+          ${logs.slice(1).map(l => `<div class="glass2 rounded-xl p-3 text-xs" style="color:#94a3b8">
+            <div class="flex gap-2 flex-wrap mb-1">
+              <span class="font-bold" style="color:var(--text)">${l.mood||''} 第${l.week}周 ${l.date}</span>
+              ${l.duration ? `<span class="badge badge-gray">${l.duration}min</span>` : ''}
+              ${l.rpe ? `<span class="badge badge-gray">RPE ${l.rpe}</span>` : ''}
+            </div>
+            ${l.notes ? `<p class="italic">"${l.notes}"</p>` : ''}
+          </div>`).join('')}
+        </div>
+      </details>` : ''}
+    </div>`;
+  });
+  document.getElementById('coachList').innerHTML = html;
+}
+
 // ─── Boot ─────────────────────────────────────────────
 window.addEventListener('load', () => {
+  // Coach mode: ?coach in URL
+  if (location.search.includes('coach') || location.hash.includes('coach')) {
+    document.getElementById('coachView').classList.remove('hidden');
+    document.getElementById('coachLogin').classList.remove('hidden');
+    document.getElementById('navInfo').classList.remove('hidden');
+    document.getElementById('navWeekBadge').textContent = '教练视角';
+    document.addEventListener('fbready', () => {});
+    return;
+  }
+
   if (!state.startDate) {
     document.getElementById('setupModal').classList.remove('hidden');
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('setupDate').value = today;
   } else {
+    // sync profile on every load
+    document.addEventListener('fbready', () => fbSyncProfile());
     init();
   }
 });
