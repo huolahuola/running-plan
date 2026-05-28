@@ -1074,7 +1074,7 @@ function deleteLog(ts) {
   state.logs = (state.logs || []).filter(l => l.ts !== ts);
   saveState();
   fbDeleteLog(ts);
-  renderTraining();
+  init();
 }
 
 function selRpe(v) {
@@ -1133,7 +1133,7 @@ function saveLog() {
   }
   saveState();
   closeLog();
-  renderTraining();
+  init();
 }
 
 
@@ -1760,40 +1760,95 @@ function _showCardModal(cvs, filename) {
 
 // Knowledge section → auto-height card
 async function shareKnCard(wk, si) {
-  const W=800, PAD=_PAD;
-  const w=PLAN[wk-1], sec=w.knowledge.sections[si];
-  const strip=s=>s.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&');
-  const contentW=W-PAD*2-150;
+  try {
+    const W=800, PAD=48;
+    const w=PLAN[wk-1], sec=w.knowledge.sections[si];
+    if(!w||!sec) return;
+    const accent=w.color||'#22c55e';
+    const strip=s=>s.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&#[^;]+;/g,'');
+    const contentW=W-PAD*2;
 
-  // Measure content height using temp canvas
-  const tmp=document.createElement('canvas').getContext('2d');
-  _ctxFont(tmp,22,'bold','#fff');
-  let ch=_measureWrapped(tmp,sec.heading,contentW,30)+20;
-  _ctxFont(tmp,15,'normal','#fff');
-  if(sec.text)      ch+=_measureWrapped(tmp,strip(sec.text),contentW,24)+8;
-  else if(sec.tips) { sec.tips.slice(0,6).forEach(t=>{ ch+=_measureWrapped(tmp,t,contentW,23)+7; }); }
-  else              ch+=30;
+    // Measure content height
+    const tmp=document.createElement('canvas').getContext('2d');
+    tmp.font='bold 24px sans-serif';
+    let ch=_measureWrapped(tmp,sec.heading,contentW,34)+28;
+    tmp.font='16px sans-serif';
+    if(sec.text)       ch+=_measureWrapped(tmp,strip(sec.text),contentW,26)+12;
+    else if(sec.tips)  sec.tips.forEach(t=>{ ch+=_measureWrapped(tmp,t,contentW-20,25)+10; });
+    else if(sec.zones) ch+=sec.zones.length*46+12;
+    else               ch+=32;
 
-  const H=_HEADER_H+80+ch+_FOOTER_H+40;
+    const HEADER_H=60, FOOTER_H=102;
+    const H=HEADER_H+48+ch+FOOTER_H;
 
-  const cvs=await _buildCard(W,H,async ctx=>{
-    await _drawCardBg(ctx,W,H,w.color||'#22c55e');
-    _ctxFont(ctx,15,'bold','#22c55e'); ctx.fillText('🏃‍♀️ 跑起来',PAD,38);
-    _ctxFont(ctx,13,'normal','#475569');
-    ctx.textAlign='right'; ctx.fillText(`第${wk}周 · ${w.topic}`,W-PAD,38); ctx.textAlign='left';
-    _ctxFont(ctx,22,'bold',w.color||'#22c55e');
-    const hn=_fillWrapped(ctx,sec.heading,PAD,90,contentW,30,3);
-    let y=90+hn*30+18;
-    ctx.fillStyle=(w.color||'#22c55e')+'40'; ctx.fillRect(PAD,y-10,36,2); y+=6;
-    _ctxFont(ctx,15,'normal','#94a3b8');
-    if(sec.text)      _fillWrapped(ctx,strip(sec.text),PAD,y,contentW,24,10);
-    else if(sec.tips) sec.tips.slice(0,6).forEach(t=>{ y+=_fillWrapped(ctx,t,PAD,y,contentW,23,2)*23+7; });
-    else if(sec.zones){ _ctxFont(ctx,13,'normal','#64748b'); ctx.fillText('Zone 1–5 心率区间详见完整课程 ↗',PAD,y); }
-    else if(sec.table){ _ctxFont(ctx,13,'normal','#64748b'); ctx.fillText('5K/10K/半马/全马配速参考表详见完整课程 ↗',PAD,y); }
-    await _drawFooter(ctx,W,H,PAD);
-  });
+    const cvs=await _buildCard(W,H,async ctx=>{
+      // Background
+      const bg=ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'#0d1a2e'); bg.addColorStop(1,'#050c18');
+      ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+      // Accent bar + header
+      ctx.fillStyle=accent; ctx.fillRect(0,0,W,4);
+      ctx.fillStyle='#111827'; ctx.fillRect(0,4,W,HEADER_H);
+      ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fillRect(0,4+HEADER_H,W,1);
+      // Header text
+      _ctxFont(ctx,15,'bold','#f9fafb'); ctx.fillText('🏃‍♀️ 跑起来',PAD,42);
+      _ctxFont(ctx,13,'normal','#6b7280');
+      ctx.textAlign='right'; ctx.fillText(`第${wk}周 · ${w.topic}`,W-PAD,42); ctx.textAlign='left';
 
-  _showCardModal(cvs,`跑步知识_第${wk}周_${sec.heading.slice(0,8)}.png`);
+      let y=HEADER_H+46;
+
+      // Heading
+      _ctxFont(ctx,24,'bold',accent);
+      const hn=_fillWrapped(ctx,sec.heading,PAD,y,contentW,34,4);
+      y+=hn*34+18;
+      // Divider
+      ctx.fillStyle=accent+'55'; ctx.fillRect(PAD,y-8,44,2); y+=6;
+
+      // Content
+      _ctxFont(ctx,16,'normal','#cbd5e1');
+      if(sec.text){
+        _fillWrapped(ctx,strip(sec.text),PAD,y,contentW,26,20);
+      } else if(sec.tips){
+        sec.tips.forEach(t=>{
+          const ln=_fillWrapped(ctx,t,PAD+18,y,contentW-18,25,4);
+          y+=ln*25+10;
+        });
+      } else if(sec.zones){
+        sec.zones.forEach(z=>{
+          ctx.fillStyle=z.color+'22'; _roundRect(ctx,PAD,y-2,W-PAD*2,38,6); ctx.fill();
+          _ctxFont(ctx,13,'bold',z.color); ctx.fillText(`${z.z} ${z.pct}  ${z.label}`,PAD+10,y+20);
+          _ctxFont(ctx,12,'normal','#94a3b8'); ctx.fillText(z.desc,PAD+260,y+20);
+          y+=46;
+        });
+      } else if(sec.table){
+        _ctxFont(ctx,14,'normal','#64748b');
+        ctx.fillText('5K/10K/半马/全马配速参考表详见完整课程 ↗',PAD,y+20);
+      }
+
+      // Footer
+      const FY=H-FOOTER_H;
+      ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fillRect(0,FY,W,1);
+      // QR code (bottom right)
+      const QS=76;
+      try {
+        const dataUrl=await QRCode.toDataURL(SITE_URL,{width:QS*2,margin:1,color:{dark:accent,light:'#050c18'}});
+        await new Promise(resolve=>{
+          const img=new Image();
+          img.onload=()=>{ ctx.save(); _roundRect(ctx,W-PAD-QS-4,FY+13-4,QS+8,QS+8,6); ctx.fillStyle='#050c18'; ctx.fill(); ctx.drawImage(img,W-PAD-QS,FY+13,QS,QS); ctx.restore(); resolve(); };
+          img.onerror=()=>resolve();
+          img.src=dataUrl;
+        });
+      } catch(e){ console.error('QR:',e); }
+      _ctxFont(ctx,13,'bold','#e2e8f0'); ctx.fillText('扫码查看完整课程',PAD,FY+28);
+      _ctxFont(ctx,11,'normal','#4b5563'); ctx.fillText(SITE_URL,PAD,FY+48);
+      _ctxFont(ctx,11,'normal','#374151'); ctx.fillText('🏃‍♀️ 跑起来 · 12周新手跑步计划',PAD,FY+68);
+    });
+
+    _showCardModal(cvs,`跑步知识_第${wk}周_${sec.heading.slice(0,8)}.png`);
+  } catch(e) {
+    alert('生成图片失败: '+e.message);
+    console.error(e);
+  }
 }
 
 // Run log → auto-height card
