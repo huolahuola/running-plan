@@ -217,7 +217,7 @@
 <div id="logModal" class="log-modal hidden">
   <div class="log-sheet">
     <div class="flex items-center justify-between mb-5">
-      <h2 class="text-lg font-black">📝 跑后记录</h2>
+      <h2 class="text-lg font-black" id="logModalTitle">📝 跑后记录</h2>
       <button onclick="closeLog()" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 text-xl" style="background:rgba(255,255,255,.07)">&times;</button>
     </div>
 
@@ -911,7 +911,15 @@ async function fbSyncDoneSessions() {
 
 async function fbPushLog(entry) {
   if (!fbReady()) return;
-  await window._fbPush(fbUserRef('logs'), entry);
+  await window._fbSet(window._fbRef(window._db, `runplan/users/${uid()}/logs/${entry.ts}`), entry);
+}
+async function fbDeleteLog(ts) {
+  if (!fbReady()) return;
+  await window._fbSet(window._fbRef(window._db, `runplan/users/${uid()}/logs/${ts}`), null);
+}
+async function fbUpdateLog(entry) {
+  if (!fbReady()) return;
+  await window._fbSet(window._fbRef(window._db, `runplan/users/${uid()}/logs/${entry.ts}`), entry);
 }
 
 function currentWeekNum() {
@@ -942,11 +950,14 @@ function markDone(sid, week) {
 
 // ─── Run Log ──────────────────────────────────────────
 let _logWeek = 1, _logRpe = null, _logComp = null, _logBreath = null, _logLeg = null, _logMood = null, _logPain = new Set();
+let _editingLogTs = null;
 
 function openLog(week) {
   _logWeek = week; _logRpe = null; _logComp = null; _logBreath = null; _logLeg = null; _logMood = null; _logPain = new Set();
+  _editingLogTs = null;
   document.getElementById('logDuration').value = '';
   document.getElementById('logNotes').value = '';
+  document.getElementById('logModalTitle').textContent = '📝 跑后记录';
   ['rpe','comp','breath','leg','mood','pain'].forEach(g => {
     const el = document.getElementById('log' + g[0].toUpperCase() + g.slice(1) + 'Group');
     if (el) el.querySelectorAll('button').forEach(b => b.classList.remove('sel'));
@@ -954,6 +965,42 @@ function openLog(week) {
   document.getElementById('logModal').classList.remove('hidden');
 }
 function closeLog() { document.getElementById('logModal').classList.add('hidden'); }
+
+function editLog(ts) {
+  const log = (state.logs || []).find(l => l.ts === ts);
+  if (!log) return;
+  _editingLogTs = ts;
+  _logWeek = log.week;
+  _logRpe = null; _logComp = null; _logBreath = null; _logLeg = null; _logMood = null; _logPain = new Set();
+  document.getElementById('logModalTitle').textContent = '✏️ 编辑记录';
+  document.getElementById('logDuration').value = log.duration || '';
+  document.getElementById('logNotes').value = log.notes || '';
+  ['rpe','comp','breath','leg','mood','pain'].forEach(g => {
+    const el = document.getElementById('log' + g[0].toUpperCase() + g.slice(1) + 'Group');
+    if (el) el.querySelectorAll('button').forEach(b => b.classList.remove('sel'));
+  });
+  if (log.rpe) selRpe(log.rpe);
+  if (log.completion) selComp(log.completion);
+  if (log.breath) selBreath(log.breath);
+  if (log.leg) selLeg(log.leg);
+  if (log.mood) selMood(log.mood);
+  if (log.pain) {
+    _logPain = new Set(log.pain);
+    document.getElementById('logPainGroup').querySelectorAll('button').forEach(b => {
+      const key = b.onclick.toString().match(/'([^']+)'/)?.[1];
+      b.classList.toggle('sel', !!(key && _logPain.has(key)));
+    });
+  }
+  document.getElementById('logModal').classList.remove('hidden');
+}
+
+function deleteLog(ts) {
+  if (!confirm('确定删除这条记录吗？')) return;
+  state.logs = (state.logs || []).filter(l => l.ts !== ts);
+  saveState();
+  fbDeleteLog(ts);
+  renderTraining();
+}
 
 function selRpe(v) {
   _logRpe = v;
@@ -987,16 +1034,27 @@ function togPain(v) {
 function saveLog() {
   const dur = parseInt(document.getElementById('logDuration').value) || null;
   const notes = document.getElementById('logNotes').value.trim();
-  const now = new Date();
-  const date = `${now.getMonth()+1}/${now.getDate()}`;
-  const entry = { week: _logWeek, date, duration: dur, rpe: _logRpe, completion: _logComp,
-    breath: _logBreath, leg: _logLeg, mood: _logMood, pain: [..._logPain], notes,
-    ts: Date.now(), userName: state.name || '跑者' };
-  state.logs = state.logs || [];
-  state.logs.push(entry);
+  if (_editingLogTs !== null) {
+    const idx = (state.logs || []).findIndex(l => l.ts === _editingLogTs);
+    if (idx >= 0) {
+      const updated = { ...state.logs[idx], duration: dur, rpe: _logRpe, completion: _logComp,
+        breath: _logBreath, leg: _logLeg, mood: _logMood, pain: [..._logPain], notes };
+      state.logs[idx] = updated;
+      fbUpdateLog(updated);
+    }
+    _editingLogTs = null;
+  } else {
+    const now = new Date();
+    const date = `${now.getMonth()+1}/${now.getDate()}`;
+    const entry = { week: _logWeek, date, duration: dur, rpe: _logRpe, completion: _logComp,
+      breath: _logBreath, leg: _logLeg, mood: _logMood, pain: [..._logPain], notes,
+      ts: Date.now(), userName: state.name || '跑者' };
+    state.logs = state.logs || [];
+    state.logs.push(entry);
+    fbPushLog(entry);
+    _afterTipsWeek = _logWeek;
+  }
   saveState();
-  fbPushLog(entry);
-  _afterTipsWeek = _logWeek;
   closeLog();
   renderTraining();
 }
@@ -1264,7 +1322,11 @@ function renderTraining() {
         html += `<div class="glass2 rounded-xl p-3 mb-2 text-xs" style="color:#94a3b8">
           <div class="flex justify-between items-center mb-1">
             <span class="font-bold" style="color:var(--text)">${l.mood || ''} ${l.date}</span>
-            <span class="badge badge-green">${l.duration ? l.duration+'分钟' : ''}</span>
+            <div class="flex items-center gap-1.5">
+              ${l.duration ? `<span class="badge badge-green">${l.duration}分钟</span>` : ''}
+              <button onclick="editLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(255,255,255,.06);color:var(--gray)">编辑</button>
+              <button onclick="deleteLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(239,68,68,.1);color:#ef4444">删除</button>
+            </div>
           </div>
           <div class="flex gap-2 flex-wrap">
             ${l.rpe ? `<span class="badge badge-gray">用力度 ${l.rpe}/10</span>` : ''}
@@ -1277,13 +1339,6 @@ function renderTraining() {
       });
     }
 
-    // Log button
-    if (isUnlocked(w.week)) {
-      html += `<button onclick="openLog(${w.week})" class="w-full font-black py-4 rounded-2xl text-sm mt-3 active:scale-95 transition-transform fade-up"
-        style="background:var(--green-dim);color:var(--green);border:1.5px solid rgba(34,197,94,.3)">
-        ＋ 记录这次跑步
-      </button>`;
-    }
   }
   document.getElementById('trainingContent').innerHTML = html;
 }
