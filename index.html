@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>跑起来 · 12周新手跑步计划</title>
+  <title>跑起来 · 5周新手跑步计划</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -93,6 +93,28 @@
     @keyframes pulse-green { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.4); } 50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); } }
     .pulse { animation: pulse-green 2s infinite; }
 
+    /* Lightsaber reveal */
+    @keyframes saberGlow {
+      0%   { box-shadow: none; border-color: rgba(249,115,22,0.4); }
+      20%  { box-shadow: 0 0 32px 6px rgba(249,115,22,.65), 0 0 70px 20px rgba(255,190,60,.25), inset 0 0 20px rgba(249,115,22,.12); border-color: rgba(249,115,22,1); }
+      55%  { box-shadow: 0 0 14px 2px rgba(249,115,22,.3); border-color: rgba(249,115,22,.75); }
+      100% { box-shadow: none; border-color: rgba(249,115,22,0.4); }
+    }
+    @keyframes saberOpen {
+      from { opacity:0; transform:translateY(-6px); }
+      to   { opacity:1; transform:none; }
+    }
+    @keyframes sweepRight {
+      from { left:-80px; opacity:1; }
+      to   { left:110%; opacity:.4; }
+    }
+    .saber-content { position:relative; overflow:hidden; }
+    .saber-sweep {
+      position:absolute; top:-30px; bottom:-30px; width:80px; pointer-events:none; z-index:10;
+      background: linear-gradient(90deg, transparent, rgba(255,210,100,.9), rgba(255,255,240,1), rgba(255,210,100,.9), transparent);
+      animation: sweepRight .55s cubic-bezier(.2,.8,.4,1) forwards;
+    }
+
     /* Setup modal */
     .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:50; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
 
@@ -149,7 +171,7 @@
     <div id="setupFormPanel">
       <div class="text-4xl text-center mb-3">🏃</div>
       <h2 class="text-2xl font-black text-center mb-1">你好，跑者！</h2>
-      <p class="text-center text-sm mb-6" style="color:var(--gray)">设置开始日期，解锁你的12周计划</p>
+      <p class="text-center text-sm mb-6" style="color:var(--gray)">设置开始日期，解锁你的5周计划</p>
       <div class="space-y-4">
         <div>
           <label class="text-xs font-bold mb-1.5 block" style="color:var(--gray)">你的名字</label>
@@ -314,6 +336,33 @@
   </div>
 </div>
 
+<!-- ─── Share Modal ────────────────────────────────── -->
+<div id="shareModal" class="modal-bg hidden" onclick="if(event.target===this)closeShare()">
+  <div class="glass rounded-3xl p-7 mx-4 max-w-sm w-full fade-up">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-black">🏃 分享进度</h2>
+      <button onclick="closeShare()" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 text-xl" style="background:rgba(255,255,255,.07)">&times;</button>
+    </div>
+    <div id="shareCard" class="rounded-2xl p-5 mb-4" style="background:linear-gradient(135deg,rgba(34,197,94,0.12) 0%,rgba(249,115,22,0.08) 100%);border:1px solid rgba(34,197,94,0.2)">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-3xl">🏃</span>
+        <div>
+          <p class="font-black text-base" id="shareTitle">第1周 · 跑起来</p>
+          <p class="text-xs" style="color:var(--gray)" id="shareSub">5周新手跑步计划</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2 text-center mb-4" id="shareStats"></div>
+      <p class="text-xs text-center" style="color:var(--gray)" id="shareMsg"></p>
+    </div>
+    <button onclick="copyShareText()" class="w-full font-black py-3 rounded-2xl mb-2 active:scale-95 transition-transform" style="background:var(--green);color:#000">
+      复制分享文字
+    </button>
+    <button onclick="closeShare()" class="w-full py-2 text-sm font-bold rounded-xl" style="color:var(--gray);background:rgba(255,255,255,0.04)">
+      关闭
+    </button>
+  </div>
+</div>
+
 <!-- ─── Nav ────────────────────────────────────────── -->
 <nav class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-5 py-3.5" style="background:rgba(8,13,23,.85); backdrop-filter:blur(16px); border-bottom:1px solid var(--border)">
   <div class="flex items-center gap-2">
@@ -322,7 +371,9 @@
   </div>
   <div id="navInfo" class="hidden flex items-center gap-2">
     <span id="navWeekBadge" class="badge badge-green">第1周</span>
+    <button onclick="shareProgress()" class="text-xs px-3 py-1.5 rounded-full font-bold" style="background:rgba(34,197,94,0.1);color:var(--green)">分享</button>
     <button onclick="openSettings()" class="text-xs px-3 py-1.5 rounded-full font-bold" style="background:rgba(255,255,255,0.06);color:var(--gray)">设置</button>
+    <button onclick="logout()" class="text-xs px-2 py-1.5 rounded-full font-bold" style="background:rgba(255,255,255,0.04);color:var(--gray)" title="退出">⏏</button>
   </div>
 </nav>
 
@@ -334,7 +385,7 @@
     <div class="max-w-lg mx-auto">
       <p id="heroGreet" class="text-sm font-bold mb-1" style="color:var(--green)">第1周 · 开始</p>
       <h1 class="text-3xl font-black leading-tight mb-2">迈出第一步<br>改变从今天开始</h1>
-      <p id="heroSub" class="text-sm mb-6" style="color:var(--gray)">12周后，你将完成人生第一个5公里</p>
+      <p id="heroSub" class="text-sm mb-6" style="color:var(--gray)">5周，迈出改变的第一步</p>
 
       <!-- Progress overview -->
       <div class="glass rounded-2xl p-5 mb-2 green-glow">
@@ -355,7 +406,7 @@
             <p class="text-xs" style="color:var(--gray)">累计公里</p>
           </div>
           <div>
-            <p id="statDays" class="text-xl font-black text-white">84</p>
+            <p id="statDays" class="text-xl font-black text-white">35</p>
             <p class="text-xs" style="color:var(--gray)">计划天数</p>
           </div>
         </div>
@@ -365,7 +416,7 @@
 
   <!-- Week Roadmap -->
   <div class="px-5 py-5 max-w-lg mx-auto">
-    <p class="text-xs font-bold mb-3" style="color:var(--gray)">12周路线图</p>
+    <p class="text-xs font-bold mb-3" style="color:var(--gray)">5周路线图</p>
     <div class="overflow-x-auto pb-2">
       <div id="weekRoadmap" class="flex gap-2 relative" style="min-width:max-content">
         <!-- generated by JS -->
@@ -416,8 +467,7 @@ const PLAN = [
     tips: {
       before: [
         '🍞 跑前1.5–2小时：吃1–2片白面包，或1根香蕉——补充一点碳水，不要空腹跑',
-        '💧 跑前15–30分钟：小口抿水200–300ml，不要大口猛喝',
-        '👟 检查鞋带、衣服是否舒适，带上手机',
+        '💧 跑前15–30分钟：小口抿水100–200ml，不要大口猛喝',
       ],
       after: [
         '💧 跑完立即补水，小口慢饮，分多次喝，目标500ml内',
@@ -873,6 +923,7 @@ const PLAN = [
 ];
 
 // ─── State ───────────────────────────────────────────
+const TOTAL_WEEKS = 5;
 let state = JSON.parse(localStorage.getItem('runstart_v1') || '{}');
 let selectedWeek = 1;
 let activeTab = 'training';
@@ -927,11 +978,36 @@ function currentWeekNum() {
   const start = new Date(state.startDate);
   const now = new Date();
   const diff = Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000));
-  return Math.max(1, Math.min(12, diff + 1));
+  return Math.max(1, Math.min(TOTAL_WEEKS, diff + 1));
 }
 
 function isUnlocked(week) {
   return week <= currentWeekNum();
+}
+
+// ─── Lightsaber tips toggle ───────────────────────────
+function toggleTips(week) {
+  const el   = document.getElementById('tips' + week);
+  const card = document.getElementById('tipsCard' + week);
+  const chev = document.getElementById('tipsChev' + week);
+  if (el.classList.contains('hidden')) {
+    el.classList.remove('hidden');
+    chev.style.transform = 'rotate(180deg)';
+    // Glow the card
+    card.style.animation = 'saberGlow .9s ease forwards';
+    setTimeout(() => { card.style.animation = ''; }, 900);
+    // Sweep beam across content
+    const sweep = document.createElement('div');
+    sweep.className = 'saber-sweep';
+    el.insertBefore(sweep, el.firstChild);
+    setTimeout(() => sweep.remove(), 650);
+    // Slide content in
+    el.style.animation = 'saberOpen .4s ease forwards';
+    setTimeout(() => { el.style.animation = ''; }, 400);
+  } else {
+    el.classList.add('hidden');
+    chev.style.transform = '';
+  }
 }
 
 // ─── After-tips state ────────────────────────────────
@@ -1059,6 +1135,44 @@ function saveLog() {
   renderTraining();
 }
 
+// ─── Share ────────────────────────────────────────────
+function shareProgress() {
+  const curWeek = currentWeekNum();
+  const totalLogs = (state.logs || []).length;
+  const doneSess = (state.doneSessions || []).length;
+  const name = state.name || '跑者';
+  document.getElementById('shareTitle').textContent = `第${curWeek}周 · ${name}`;
+  document.getElementById('shareStats').innerHTML = `
+    <div><p class="text-xl font-black accent">${curWeek}</p><p class="text-xs" style="color:var(--gray)">当前周次</p></div>
+    <div><p class="text-xl font-black" style="color:var(--orange)">${doneSess}</p><p class="text-xs" style="color:var(--gray)">完成训练</p></div>
+    <div><p class="text-xl font-black text-white">${totalLogs}</p><p class="text-xs" style="color:var(--gray)">跑后记录</p></div>`;
+  const msgs = [
+    '每一步都算数 💪', '坚持就是胜利 🔥', '跑步改变人生 ✨', '从今天开始不一样 🌟', '跑者精神，永不放弃 ⚡'
+  ];
+  document.getElementById('shareMsg').textContent = msgs[curWeek % msgs.length];
+  document.getElementById('shareModal').classList.remove('hidden');
+}
+function closeShare() { document.getElementById('shareModal').classList.add('hidden'); }
+function copyShareText() {
+  const curWeek = currentWeekNum();
+  const name = state.name || '跑者';
+  const doneSess = (state.doneSessions || []).length;
+  const text = `🏃 ${name} 的跑步进度\n\n📅 第 ${curWeek} 周 / 共${TOTAL_WEEKS}周\n✅ 完成 ${doneSess} 次训练\n\n跑起来！5周新手跑步计划 💪`;
+  navigator.clipboard?.writeText(text).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ 已复制！';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+// ─── Logout ───────────────────────────────────────────
+function logout() {
+  if (!confirm('退出后需要用恢复码重新登录，确定退出吗？')) return;
+  localStorage.removeItem('runstart_v1');
+  location.reload();
+}
+
 // ─── Setup panels ────────────────────────────────────
 function showSetupForm() {
   document.getElementById('setupFormPanel').classList.remove('hidden');
@@ -1155,18 +1269,18 @@ function init() {
   // Hero
   const names = { '周一': 'Mon', '周三': 'Wed', '周六': 'Sat' };
   document.getElementById('heroGreet').textContent = `第${curWeek}周 · ${state.name || '跑者'}，加油！`;
-  document.getElementById('heroSub').textContent = `12周后你将完成人生第一个5公里 · 已坚持 ${curWeek - 1} 周`;
+  document.getElementById('heroSub').textContent = `${TOTAL_WEEKS}周后你将完成人生第一个5公里 · 已坚持 ${curWeek - 1} 周`;
   document.getElementById('navWeekBadge').textContent = `第${curWeek}周`;
 
   // Progress
-  const pct = Math.round(((curWeek - 1) / 12) * 100);
+  const pct = Math.round(((curWeek - 1) / TOTAL_WEEKS) * 100);
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressPct').textContent = pct + '%';
   document.getElementById('statWeek').textContent = curWeek;
-  document.getElementById('statDays').textContent = Math.max(0, 84 - (curWeek - 1) * 7);
+  document.getElementById('statDays').textContent = Math.max(0, TOTAL_WEEKS * 7 - (curWeek - 1) * 7);
 
   // Cumulative km estimate
-  const kmPerWeek = [7, 9, 11, 13, 15, 17, 19, 19, 21, 21, 19, 13];
+  const kmPerWeek = [7, 9, 11, 13, 15, 17, 19, 19, 21, 21, 19, 13].slice(0, TOTAL_WEEKS);
   let totalKm = 0;
   for (let i = 0; i < curWeek - 1; i++) totalKm += kmPerWeek[i] || 0;
   document.getElementById('statKm').textContent = totalKm;
@@ -1180,7 +1294,7 @@ function renderRoadmap() {
   const curWeek = currentWeekNum();
   const container = document.getElementById('weekRoadmap');
   container.innerHTML = '';
-  PLAN.forEach(w => {
+  PLAN.slice(0, TOTAL_WEEKS).forEach(w => {
     const done = w.week < curWeek;
     const cur  = w.week === curWeek;
     const sel  = w.week === selectedWeek;
@@ -1255,24 +1369,16 @@ function renderTraining() {
       <p class="text-sm" style="color:var(--gray)">${d.getMonth()+1}月${d.getDate()}日解锁</p>
     </div>`;
   } else {
-    // Pre-run tips: collapsible "跑前锦囊" — prominent, before sessions, open by default
+    // Pre-run tips: collapsible "跑前锦囊" — centered, collapsed, lightsaber open
     if (w.tips) {
-      html += `<div class="rounded-2xl p-4 mb-4 fade-up" style="background:rgba(249,115,22,0.1);border:1.5px solid rgba(249,115,22,0.4)">
-        <button onclick="var el=document.getElementById('tips${w.week}');el.classList.toggle('hidden');this.querySelector('.chev').style.transform=el.classList.contains('hidden')?'':'rotate(180deg)'" class="w-full flex items-center justify-between">
+      html += `<div id="tipsCard${w.week}" class="rounded-2xl p-4 mb-4 fade-up" style="background:rgba(249,115,22,0.08);border:1.5px solid rgba(249,115,22,0.4);cursor:pointer" onclick="toggleTips(${w.week})">
+        <div class="flex items-center justify-center gap-2">
           <span class="font-black text-base" style="color:var(--orange)">🎒 跑前锦囊</span>
-          <span class="chev text-base transition-transform" style="color:var(--orange);display:inline-block">▾</span>
-        </button>
-        <div id="tips${w.week}" class="mt-3">
+          <span id="tipsChev${w.week}" class="text-base" style="color:var(--orange);display:inline-block;transition:transform .3s">▾</span>
+        </div>
+        <div id="tips${w.week}" class="hidden mt-3 saber-content">
           ${w.tips.before.map(t => `<div class="flex gap-2 mb-2 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#cbd5e1">${t.slice(2)}</span></div>`).join('')}
         </div>
-      </div>`;
-    }
-
-    // Concept card (week 1 only)
-    if (w.concept) {
-      html += `<div class="glass rounded-2xl p-4 mb-3 fade-up" style="border-left:3px solid var(--green)">
-        <p class="font-black text-sm mb-2" style="color:var(--green)">💡 ${w.concept.title}</p>
-        <p class="text-sm leading-relaxed" style="color:#94a3b8">${w.concept.body}</p>
       </div>`;
     }
 
@@ -1305,6 +1411,13 @@ function renderTraining() {
         </button>` : ''}
       </div>`;
     });
+
+    // Concept note: subtle explanation after sessions (week 1 only)
+    if (w.concept) {
+      html += `<p class="text-xs leading-relaxed mb-3 px-1 fade-up" style="color:var(--gray)">
+        💡 <strong style="color:#94a3b8">${w.concept.title}</strong> ${w.concept.body.replace(/<[^>]+>/g,'')}
+      </p>`;
+    }
 
     // Post-run tips: shown after saving a log
     if (w.tips && _afterTipsWeek === w.week) {
@@ -1460,7 +1573,7 @@ function renderPlan() {
   let html = '<div class="fade-up">';
   html += `<p class="text-xs font-bold mb-4" style="color:var(--gray)">点击任意周次查看详情</p>`;
   const curWeek = currentWeekNum();
-  PLAN.forEach(w => {
+  PLAN.slice(0, TOTAL_WEEKS).forEach(w => {
     const done = w.week < curWeek;
     const cur  = w.week === curWeek;
     const sel  = w.week === selectedWeek;
