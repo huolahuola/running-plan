@@ -1715,17 +1715,26 @@ async function _drawCardBg(ctx, W, H, accentColor) {
 async function _drawFooter(ctx, W, H, PAD) {
   const FH = 108, fy = H - FH, QS = 82;
   ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(PAD,fy,W-PAD*2,1);
-  // QR code — await so it's rendered before toDataURL()
   try {
-    const qc = document.createElement('canvas');
-    await QRCode.toCanvas(qc, SITE_URL, { width:QS*2, margin:1, color:{ dark:'#22c55e', light:'#0a1020' } });
-    const qx=W-PAD-QS, qy=fy+13;
-    ctx.save();
-    _roundRect(ctx,qx-4,qy-4,QS+8,QS+8,8); ctx.clip();
-    ctx.fillStyle='#0a1020'; ctx.fill();
-    ctx.drawImage(qc,qx,qy,QS,QS);
-    ctx.restore();
-  } catch(e) {}
+    const dataUrl = await QRCode.toDataURL(SITE_URL, {
+      width: QS*2, margin: 1,
+      color: { dark: '#22c55e', light: '#0a1020' }
+    });
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const qx = W-PAD-QS, qy = fy+13;
+        ctx.save();
+        _roundRect(ctx, qx-4, qy-4, QS+8, QS+8, 8);
+        ctx.fillStyle = '#0a1020'; ctx.fill();
+        ctx.drawImage(img, qx, qy, QS, QS);
+        ctx.restore();
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = dataUrl;
+    });
+  } catch(e) { console.error('QR error:', e); }
   _ctxFont(ctx,13,'bold','#e2e8f0'); ctx.fillText('扫码查看完整课程',PAD,fy+28);
   _ctxFont(ctx,11,'normal','#475569'); ctx.fillText(SITE_URL,PAD,fy+48);
   _ctxFont(ctx,11,'normal','#334155'); ctx.fillText('🏃‍♀️ 跑起来 · 12周新手跑步计划',PAD,fy+66);
