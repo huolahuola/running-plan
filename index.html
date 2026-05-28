@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>跑起来 · 12周新手跑步计划</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, set, push, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
@@ -1700,7 +1700,7 @@ function _measureWrapped(ctx, text, maxW, lineH) {
   return count * lineH;
 }
 
-async function _drawCardBg(ctx, W, H, accentColor) {
+function _drawCardBg(ctx, W, H, accentColor) {
   const bg = ctx.createLinearGradient(0,0,W,H);
   bg.addColorStop(0,'#0d1526'); bg.addColorStop(1,'#080d17');
   ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
@@ -1712,29 +1712,31 @@ async function _drawCardBg(ctx, W, H, accentColor) {
   ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(0,58,W,1);
 }
 
-async function _drawFooter(ctx, W, H, PAD) {
+function _drawQR(ctx, x, y, size, darkColor, lightColor) {
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(SITE_URL);
+    qr.make();
+    const count = qr.getModuleCount();
+    const cell = size / count;
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        ctx.fillStyle = qr.isDark(r, c) ? darkColor : lightColor;
+        ctx.fillRect(x + c*cell, y + r*cell, cell, cell);
+      }
+    }
+  } catch(e) { console.error('QR draw:', e); }
+}
+
+function _drawFooter(ctx, W, H, PAD) {
   const FH = 108, fy = H - FH, QS = 82;
   ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(PAD,fy,W-PAD*2,1);
-  try {
-    const dataUrl = await QRCode.toDataURL(SITE_URL, {
-      width: QS*2, margin: 1,
-      color: { dark: '#22c55e', light: '#0a1020' }
-    });
-    await new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const qx = W-PAD-QS, qy = fy+13;
-        ctx.save();
-        _roundRect(ctx, qx-4, qy-4, QS+8, QS+8, 8);
-        ctx.fillStyle = '#0a1020'; ctx.fill();
-        ctx.drawImage(img, qx, qy, QS, QS);
-        ctx.restore();
-        resolve();
-      };
-      img.onerror = () => resolve();
-      img.src = dataUrl;
-    });
-  } catch(e) { console.error('QR error:', e); }
+  const qx = W-PAD-QS, qy = fy+13;
+  ctx.save();
+  _roundRect(ctx, qx-4, qy-4, QS+8, QS+8, 8);
+  ctx.fillStyle = '#0a1020'; ctx.fill();
+  _drawQR(ctx, qx, qy, QS, '#22c55e', '#0a1020');
+  ctx.restore();
   _ctxFont(ctx,13,'bold','#e2e8f0'); ctx.fillText('扫码查看完整课程',PAD,fy+28);
   _ctxFont(ctx,11,'normal','#475569'); ctx.fillText(SITE_URL,PAD,fy+48);
   _ctxFont(ctx,11,'normal','#334155'); ctx.fillText('🏃‍♀️ 跑起来 · 12周新手跑步计划',PAD,fy+66);
@@ -1742,12 +1744,12 @@ async function _drawFooter(ctx, W, H, PAD) {
 
 const _FOOTER_H = 108, _HEADER_H = 58, _PAD = 46;
 
-async function _buildCard(W, H, drawFn) {
+function _buildCard(W, H, drawFn) {
   const DPR = 2;
   const cvs = document.createElement('canvas');
   cvs.width=W*DPR; cvs.height=H*DPR;
   const ctx=cvs.getContext('2d'); ctx.scale(DPR,DPR);
-  await drawFn(ctx); return cvs;
+  drawFn(ctx); return cvs;
 }
 
 function _showCardModal(cvs, filename) {
@@ -1781,7 +1783,7 @@ async function shareKnCard(wk, si) {
     const HEADER_H=60, FOOTER_H=102;
     const H=HEADER_H+48+ch+FOOTER_H;
 
-    const cvs=await _buildCard(W,H,async ctx=>{
+    const cvs=_buildCard(W,H,ctx=>{
       // Background
       const bg=ctx.createLinearGradient(0,0,0,H);
       bg.addColorStop(0,'#0d1a2e'); bg.addColorStop(1,'#050c18');
@@ -1830,15 +1832,11 @@ async function shareKnCard(wk, si) {
       ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fillRect(0,FY,W,1);
       // QR code (bottom right)
       const QS=76;
-      try {
-        const dataUrl=await QRCode.toDataURL(SITE_URL,{width:QS*2,margin:1,color:{dark:accent,light:'#050c18'}});
-        await new Promise(resolve=>{
-          const img=new Image();
-          img.onload=()=>{ ctx.save(); _roundRect(ctx,W-PAD-QS-4,FY+13-4,QS+8,QS+8,6); ctx.fillStyle='#050c18'; ctx.fill(); ctx.drawImage(img,W-PAD-QS,FY+13,QS,QS); ctx.restore(); resolve(); };
-          img.onerror=()=>resolve();
-          img.src=dataUrl;
-        });
-      } catch(e){ console.error('QR:',e); }
+      ctx.save();
+      _roundRect(ctx,W-PAD-QS-4,FY+13-4,QS+8,QS+8,6);
+      ctx.fillStyle='#050c18'; ctx.fill();
+      _drawQR(ctx,W-PAD-QS,FY+13,QS,accent,'#050c18');
+      ctx.restore();
       _ctxFont(ctx,13,'bold','#e2e8f0'); ctx.fillText('扫码查看完整课程',PAD,FY+28);
       _ctxFont(ctx,11,'normal','#4b5563'); ctx.fillText(SITE_URL,PAD,FY+48);
       _ctxFont(ctx,11,'normal','#374151'); ctx.fillText('🏃‍♀️ 跑起来 · 12周新手跑步计划',PAD,FY+68);
@@ -1878,8 +1876,8 @@ async function shareRunCard(ts) {
   }
   const H=_HEADER_H+38+52+90+(stats.length?90:10)+detH+notesH+_FOOTER_H+40;
 
-  const cvs=await _buildCard(W,H,async ctx=>{
-    await _drawCardBg(ctx,W,H,'#22c55e');
+  const cvs=_buildCard(W,H,ctx=>{
+    _drawCardBg(ctx,W,H,'#22c55e');
     _ctxFont(ctx,15,'bold','#22c55e'); ctx.fillText('🏃‍♀️ 跑起来',PAD,38);
     _ctxFont(ctx,13,'normal','#475569');
     ctx.textAlign='right'; ctx.fillText(`第${l.week}周 · ${l.date}`,W-PAD,38); ctx.textAlign='left';
@@ -1902,7 +1900,7 @@ async function shareRunCard(ts) {
       _ctxFont(ctx,15,'normal','#cbd5e1');
       _fillWrapped(ctx,`"${l.notes}"`,PAD+14,y+22,contentW-28,24,5);
     }
-    await _drawFooter(ctx,W,H,PAD);
+    _drawFooter(ctx,W,H,PAD);
   });
 
   _showCardModal(cvs,`跑步记录_第${l.week}周_${l.date.replace('/','')}.png`);
