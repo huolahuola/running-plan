@@ -90,6 +90,20 @@
     input[type=range] { accent-color: var(--green); }
     input[type=date], input[type=number], input[type=text] { background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; width: 100%; font-size: 15px; outline: none; }
     input[type=date]:focus, input[type=number]:focus { border-color: var(--green); }
+    textarea { background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; width: 100%; font-size: 14px; outline: none; resize: none; font-family: inherit; }
+    textarea:focus { border-color: var(--green); }
+
+    /* Log modal */
+    .log-modal { position:fixed; inset:0; z-index:60; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.6); backdrop-filter:blur(8px); }
+    .log-sheet { background: var(--card); border-radius: 24px 24px 0 0; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; padding: 24px 20px 40px; }
+    .rpe-btn { flex:1; padding:8px 4px; border-radius:10px; font-size:13px; font-weight:700; text-align:center; cursor:pointer; border:2px solid transparent; transition:all .15s; background:rgba(255,255,255,.05); color:var(--gray); }
+    .rpe-btn.sel { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+    .choice-btn { padding:8px 14px; border-radius:999px; font-size:12px; font-weight:700; cursor:pointer; border:1.5px solid rgba(255,255,255,.1); color:var(--gray); background:rgba(255,255,255,.04); transition:all .15s; }
+    .choice-btn.sel { border-color:var(--green); color:var(--green); background:var(--green-dim); }
+    .mood-btn { font-size:22px; padding:6px 10px; border-radius:12px; cursor:pointer; border:2px solid transparent; transition:all .15s; }
+    .mood-btn.sel { border-color:var(--green); background:var(--green-dim); transform:scale(1.2); }
+    .log-section { margin-bottom:20px; }
+    .log-label { font-size:12px; font-weight:700; color:var(--gray); margin-bottom:8px; }
   </style>
 </head>
 <body>
@@ -117,6 +131,107 @@
         开始我的跑步之旅 →
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ─── Run Log Modal ───────────────────────────────── -->
+<div id="logModal" class="log-modal hidden">
+  <div class="log-sheet">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-black">📝 跑后记录</h2>
+      <button onclick="closeLog()" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 text-xl" style="background:rgba(255,255,255,.07)">&times;</button>
+    </div>
+
+    <!-- 1. Duration -->
+    <div class="log-section">
+      <p class="log-label">⏱ 实际跑了多久（分钟）</p>
+      <input type="number" id="logDuration" placeholder="例如：30" min="1" max="180" style="width:120px">
+    </div>
+
+    <!-- 2. RPE -->
+    <div class="log-section">
+      <p class="log-label">💪 感知用力度（RPE）— 这次跑步有多累？</p>
+      <div class="flex gap-1.5 flex-wrap" id="logRpeGroup">
+        <button class="rpe-btn" onclick="selRpe(1)" id="rpe1">1<br><span style="font-size:9px;font-weight:400">极轻松</span></button>
+        <button class="rpe-btn" onclick="selRpe(2)" id="rpe2">2</button>
+        <button class="rpe-btn" onclick="selRpe(3)" id="rpe3">3<br><span style="font-size:9px;font-weight:400">轻松</span></button>
+        <button class="rpe-btn" onclick="selRpe(4)" id="rpe4">4</button>
+        <button class="rpe-btn" onclick="selRpe(5)" id="rpe5">5<br><span style="font-size:9px;font-weight:400">中等</span></button>
+        <button class="rpe-btn" onclick="selRpe(6)" id="rpe6">6</button>
+        <button class="rpe-btn" onclick="selRpe(7)" id="rpe7">7<br><span style="font-size:9px;font-weight:400">较累</span></button>
+        <button class="rpe-btn" onclick="selRpe(8)" id="rpe8">8</button>
+        <button class="rpe-btn" onclick="selRpe(9)" id="rpe9">9<br><span style="font-size:9px;font-weight:400">很累</span></button>
+        <button class="rpe-btn" onclick="selRpe(10)" id="rpe10">10<br><span style="font-size:9px;font-weight:400">极限</span></button>
+      </div>
+    </div>
+
+    <!-- 3. Completion -->
+    <div class="log-section">
+      <p class="log-label">✅ 完成情况</p>
+      <div class="flex gap-2 flex-wrap" id="logCompGroup">
+        <button class="choice-btn" onclick="selComp('full')">全程跑完了</button>
+        <button class="choice-btn" onclick="selComp('walk')">中途走了几步</button>
+        <button class="choice-btn" onclick="selComp('cut')">提前结束了</button>
+      </div>
+    </div>
+
+    <!-- 4. Breathing -->
+    <div class="log-section">
+      <p class="log-label">🌬 呼吸顺畅度</p>
+      <div class="flex gap-2 flex-wrap" id="logBreathGroup">
+        <button class="choice-btn" onclick="selBreath('很顺')">很顺畅</button>
+        <button class="choice-btn" onclick="selBreath('还好')">还可以</button>
+        <button class="choice-btn" onclick="selBreath('喘')">有点喘</button>
+        <button class="choice-btn" onclick="selBreath('很喘')">很喘</button>
+      </div>
+    </div>
+
+    <!-- 5. Legs -->
+    <div class="log-section">
+      <p class="log-label">🦵 腿部感觉</p>
+      <div class="flex gap-2 flex-wrap" id="logLegGroup">
+        <button class="choice-btn" onclick="selLeg('轻盈')">很轻盈</button>
+        <button class="choice-btn" onclick="selLeg('正常')">正常</button>
+        <button class="choice-btn" onclick="selLeg('沉')">有点沉</button>
+        <button class="choice-btn" onclick="selLeg('酸')">酸痛</button>
+        <button class="choice-btn" onclick="selLeg('很重')">很沉很累</button>
+      </div>
+    </div>
+
+    <!-- 6. Discomfort -->
+    <div class="log-section">
+      <p class="log-label">🩹 有无不适（可多选）</p>
+      <div class="flex gap-2 flex-wrap" id="logPainGroup">
+        <button class="choice-btn" onclick="togPain('none')">没有不适</button>
+        <button class="choice-btn" onclick="togPain('side')">侧腹痛</button>
+        <button class="choice-btn" onclick="togPain('knee')">膝盖不适</button>
+        <button class="choice-btn" onclick="togPain('shin')">小腿酸痛</button>
+        <button class="choice-btn" onclick="togPain('ankle')">脚踝不适</button>
+        <button class="choice-btn" onclick="togPain('back')">腰背不适</button>
+      </div>
+    </div>
+
+    <!-- 7. Mood -->
+    <div class="log-section">
+      <p class="log-label">😊 跑完心情</p>
+      <div class="flex gap-3" id="logMoodGroup">
+        <button class="mood-btn" onclick="selMood('😞')" id="mood0">😞</button>
+        <button class="mood-btn" onclick="selMood('😐')" id="mood1">😐</button>
+        <button class="mood-btn" onclick="selMood('🙂')" id="mood2">🙂</button>
+        <button class="mood-btn" onclick="selMood('😄')" id="mood3">😄</button>
+        <button class="mood-btn" onclick="selMood('🤩')" id="mood4">🤩</button>
+      </div>
+    </div>
+
+    <!-- 8. Notes -->
+    <div class="log-section">
+      <p class="log-label">✏️ 自由感受（想说什么都行）</p>
+      <textarea id="logNotes" rows="3" placeholder="今天感觉怎么样？有什么想记下来的？"></textarea>
+    </div>
+
+    <button onclick="saveLog()" class="w-full font-black py-4 rounded-2xl text-black text-base active:scale-95 transition-transform" style="background:var(--green)">
+      保存这次记录 ✓
+    </button>
   </div>
 </div>
 
@@ -211,13 +326,31 @@
 const PLAN = [
   {
     week: 1, topic: '心率与跑步区间', icon: '❤️', color: '#ef4444',
-    weeklyKm: '6–8 km',
+    weeklyKm: '9–12 km',
     sessions: [
-      { day: '周一', label: '走跑交替', desc: '走5分钟热身 · (跑1分钟+走2分钟)×6 · 走5分钟放松', duration: 28, type: 'run' },
-      { day: '周三', label: '走跑交替', desc: '同上，注意感受心率变化', duration: 28, type: 'run' },
-      { day: '周六', label: '走跑交替', desc: '同上，跑步时尝试"说话测试"，全程要能说完整句子', duration: 28, type: 'run' },
-      { day: '周二/四/五', label: '休息或散步', desc: '轻松散步20分钟，让身体适应', type: 'rest' },
+      {
+        day: '每周3次（如周一/周三/周六）',
+        label: '2区心率慢跑 30分钟',
+        desc: '全程慢跑，不走路，不要求配速——只要求"跑得可控"。只要你能一边跑一边正常说话，配速就是对的。',
+        duration: 30, type: 'run',
+      },
     ],
+    concept: {
+      title: '什么是"慢跑"？',
+      body: '慢跑不是慢慢走，也不是冲刺。它是一种你能维持长时间、呼吸顺畅的跑步节奏。判断标准只有一条：<strong>你能用正常语速说完一整句话吗？</strong> 能说 → 速度刚好。说不完整 → 跑慢一点。',
+    },
+    tips: {
+      before: [
+        '🍞 跑前1.5–2小时：吃1–2片白面包，或1根香蕉——补充一点碳水，不要空腹跑',
+        '💧 跑前15–30分钟：小口抿水200–300ml，不要大口猛喝',
+        '👟 检查鞋带、衣服是否舒适，带上手机',
+      ],
+      after: [
+        '💧 跑完立即补水，小口慢饮，分多次喝，目标500ml内',
+        '🚶 不要立刻坐下！先慢走3–5分钟让心率平缓下来',
+        '🍌 如果感觉饿，可以吃一根香蕉或喝一杯牛奶',
+      ],
+    },
     knowledge: {
       title: '心率区间：让数据指导你的每一步',
       summary: '跑太快是新手最常犯的错误。心率数据能帮你找到最有效的训练节奏。',
@@ -670,6 +803,64 @@ function isUnlocked(week) {
   return week <= currentWeekNum();
 }
 
+// ─── Run Log ──────────────────────────────────────────
+let _logWeek = 1, _logRpe = null, _logComp = null, _logBreath = null, _logLeg = null, _logMood = null, _logPain = new Set();
+
+function openLog(week) {
+  _logWeek = week; _logRpe = null; _logComp = null; _logBreath = null; _logLeg = null; _logMood = null; _logPain = new Set();
+  document.getElementById('logDuration').value = '';
+  document.getElementById('logNotes').value = '';
+  ['rpe','comp','breath','leg','mood','pain'].forEach(g => {
+    const el = document.getElementById('log' + g[0].toUpperCase() + g.slice(1) + 'Group');
+    if (el) el.querySelectorAll('button').forEach(b => b.classList.remove('sel'));
+  });
+  document.getElementById('logModal').classList.remove('hidden');
+}
+function closeLog() { document.getElementById('logModal').classList.add('hidden'); }
+
+function selRpe(v) {
+  _logRpe = v;
+  for (let i=1;i<=10;i++) document.getElementById('rpe'+i)?.classList.toggle('sel', i===v);
+}
+function selComp(v) {
+  _logComp = v;
+  document.getElementById('logCompGroup').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.onclick.toString().includes("'"+v+"'")));
+}
+function selBreath(v) {
+  _logBreath = v;
+  document.getElementById('logBreathGroup').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.onclick.toString().includes("'"+v+"'")));
+}
+function selLeg(v) {
+  _logLeg = v;
+  document.getElementById('logLegGroup').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.onclick.toString().includes("'"+v+"'")));
+}
+function selMood(v) {
+  _logMood = v;
+  document.getElementById('logMoodGroup').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.textContent.trim()===v));
+}
+function togPain(v) {
+  if (v === 'none') { _logPain = new Set(['none']); }
+  else { _logPain.delete('none'); _logPain.has(v) ? _logPain.delete(v) : _logPain.add(v); }
+  document.getElementById('logPainGroup').querySelectorAll('button').forEach(b => {
+    const key = b.onclick.toString().match(/'([^']+)'/)?.[1];
+    b.classList.toggle('sel', key && _logPain.has(key));
+  });
+}
+
+function saveLog() {
+  const dur = parseInt(document.getElementById('logDuration').value) || null;
+  const notes = document.getElementById('logNotes').value.trim();
+  const now = new Date();
+  const date = `${now.getMonth()+1}/${now.getDate()}`;
+  const entry = { week: _logWeek, date, duration: dur, rpe: _logRpe, completion: _logComp,
+    breath: _logBreath, leg: _logLeg, mood: _logMood, pain: [..._logPain], notes, ts: Date.now() };
+  state.logs = state.logs || [];
+  state.logs.push(entry);
+  saveState();
+  closeLog();
+  renderTraining();
+}
+
 // ─── Setup ───────────────────────────────────────────
 function openSetup() {
   const m = document.getElementById('setupModal');
@@ -805,6 +996,15 @@ function renderTraining() {
       <p class="text-sm" style="color:var(--gray)">${d.getMonth()+1}月${d.getDate()}日解锁</p>
     </div>`;
   } else {
+    // Concept card (week 1 only)
+    if (w.concept) {
+      html += `<div class="glass rounded-2xl p-4 mb-3 fade-up" style="border-left:3px solid var(--green)">
+        <p class="font-black text-sm mb-2" style="color:var(--green)">💡 ${w.concept.title}</p>
+        <p class="text-sm leading-relaxed" style="color:#94a3b8">${w.concept.body}</p>
+      </div>`;
+    }
+
+    // Sessions
     w.sessions.forEach(s => {
       const isRace = s.type === 'race';
       const isRest = s.type === 'rest';
@@ -824,6 +1024,47 @@ function renderTraining() {
         </div>
       </div>`;
     });
+
+    // Tips card
+    if (w.tips) {
+      html += `<div class="glass rounded-2xl p-4 mb-3 fade-up">
+        <p class="font-black text-sm mb-3">🎒 每次跑步的小提示</p>
+        <p class="text-xs font-bold mb-2" style="color:var(--orange)">跑前</p>
+        ${w.tips.before.map(t => `<div class="flex gap-2 mb-1.5 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#94a3b8">${t.slice(2)}</span></div>`).join('')}
+        <div class="my-3" style="height:1px;background:var(--border)"></div>
+        <p class="text-xs font-bold mb-2" style="color:var(--green)">跑后</p>
+        ${w.tips.after.map(t => `<div class="flex gap-2 mb-1.5 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#94a3b8">${t.slice(2)}</span></div>`).join('')}
+      </div>`;
+    }
+
+    // Past logs for this week
+    const logs = (state.logs || []).filter(l => l.week === w.week);
+    if (logs.length) {
+      html += `<p class="text-xs font-bold mb-2 mt-4" style="color:var(--gray)">📒 本周记录（${logs.length}次）</p>`;
+      logs.slice().reverse().forEach(l => {
+        html += `<div class="glass2 rounded-xl p-3 mb-2 text-xs" style="color:#94a3b8">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold" style="color:var(--text)">${l.mood || ''} ${l.date}</span>
+            <span class="badge badge-green">${l.duration ? l.duration+'分钟' : ''}</span>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            ${l.rpe ? `<span class="badge badge-gray">用力度 ${l.rpe}/10</span>` : ''}
+            ${l.completion ? `<span class="badge badge-gray">${{full:'全程完成',walk:'中途走了',cut:'提前结束'}[l.completion]||l.completion}</span>` : ''}
+            ${l.breath ? `<span class="badge badge-gray">呼吸${l.breath}</span>` : ''}
+            ${l.leg ? `<span class="badge badge-gray">腿${l.leg}</span>` : ''}
+          </div>
+          ${l.notes ? `<p class="mt-1.5 italic">"${l.notes}"</p>` : ''}
+        </div>`;
+      });
+    }
+
+    // Log button
+    if (isUnlocked(w.week)) {
+      html += `<button onclick="openLog(${w.week})" class="w-full font-black py-4 rounded-2xl text-sm mt-3 active:scale-95 transition-transform fade-up"
+        style="background:var(--green-dim);color:var(--green);border:1.5px solid rgba(34,197,94,.3)">
+        ＋ 记录这次跑步
+      </button>`;
+    }
   }
   document.getElementById('trainingContent').innerHTML = html;
 }
