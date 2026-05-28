@@ -243,10 +243,18 @@
       <button onclick="closeLog()" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 text-xl" style="background:rgba(255,255,255,.07)">&times;</button>
     </div>
 
-    <!-- 1. Duration -->
+    <!-- 1. Duration + Distance -->
     <div class="log-section">
-      <p class="log-label">⏱ 实际跑了多久（分钟）</p>
-      <input type="number" id="logDuration" placeholder="例如：30" min="1" max="180" style="width:120px">
+      <div class="flex gap-4">
+        <div>
+          <p class="log-label">⏱ 时长（分钟）</p>
+          <input type="number" id="logDuration" placeholder="30" min="1" max="180" style="width:110px">
+        </div>
+        <div>
+          <p class="log-label">📍 距离（公里）</p>
+          <input type="number" id="logDistance" placeholder="3.0" min="0.1" max="100" step="0.1" style="width:110px">
+        </div>
+      </div>
     </div>
 
     <!-- 2. RPE -->
@@ -1031,6 +1039,7 @@ function openLog(week) {
   _logWeek = week; _logRpe = null; _logComp = null; _logBreath = null; _logLeg = null; _logMood = null; _logPain = new Set();
   _editingLogTs = null;
   document.getElementById('logDuration').value = '';
+  document.getElementById('logDistance').value = '';
   document.getElementById('logNotes').value = '';
   document.getElementById('logModalTitle').textContent = '📝 跑后记录';
   ['rpe','comp','breath','leg','mood','pain'].forEach(g => {
@@ -1049,6 +1058,7 @@ function editLog(ts) {
   _logRpe = null; _logComp = null; _logBreath = null; _logLeg = null; _logMood = null; _logPain = new Set();
   document.getElementById('logModalTitle').textContent = '✏️ 编辑记录';
   document.getElementById('logDuration').value = log.duration || '';
+  document.getElementById('logDistance').value = log.distance || '';
   document.getElementById('logNotes').value = log.notes || '';
   ['rpe','comp','breath','leg','mood','pain'].forEach(g => {
     const el = document.getElementById('log' + g[0].toUpperCase() + g.slice(1) + 'Group');
@@ -1107,13 +1117,15 @@ function togPain(v) {
 }
 
 function saveLog() {
-  const dur = parseInt(document.getElementById('logDuration').value) || null;
+  const dur  = parseInt(document.getElementById('logDuration').value) || null;
+  const dist = parseFloat(document.getElementById('logDistance').value) || null;
   const notes = document.getElementById('logNotes').value.trim();
   if (_editingLogTs !== null) {
     const idx = (state.logs || []).findIndex(l => l.ts === _editingLogTs);
     if (idx >= 0) {
-      const updated = { ...state.logs[idx], duration: dur, rpe: _logRpe, completion: _logComp,
-        breath: _logBreath, leg: _logLeg, mood: _logMood, pain: [..._logPain], notes };
+      const updated = { ...state.logs[idx], duration: dur, distance: dist, rpe: _logRpe,
+        completion: _logComp, breath: _logBreath, leg: _logLeg, mood: _logMood,
+        pain: [..._logPain], notes };
       state.logs[idx] = updated;
       fbUpdateLog(updated);
     }
@@ -1121,9 +1133,9 @@ function saveLog() {
   } else {
     const now = new Date();
     const date = `${now.getMonth()+1}/${now.getDate()}`;
-    const entry = { week: _logWeek, date, duration: dur, rpe: _logRpe, completion: _logComp,
-      breath: _logBreath, leg: _logLeg, mood: _logMood, pain: [..._logPain], notes,
-      ts: Date.now(), userName: state.name || '跑者' };
+    const entry = { week: _logWeek, date, duration: dur, distance: dist, rpe: _logRpe,
+      completion: _logComp, breath: _logBreath, leg: _logLeg, mood: _logMood,
+      pain: [..._logPain], notes, ts: Date.now(), userName: state.name || '跑者' };
     state.logs = state.logs || [];
     state.logs.push(entry);
     fbPushLog(entry);
@@ -1144,7 +1156,8 @@ function shareLog(ts) {
     `🏃 ${name} 的跑步记录`,
     ``,
     `📅 ${l.date}　第${l.week}周`,
-    l.duration ? `⏱ 跑了 ${l.duration} 分钟` : '',
+    l.distance ? `📍 跑了 ${l.distance} 公里` : '',
+    l.duration ? `⏱ 用时 ${l.duration} 分钟` : '',
     l.rpe ? `💪 用力度 ${l.rpe}/10` : '',
     l.completion ? `✅ ${compMap[l.completion] || l.completion}` : '',
     l.breath ? `🌬 呼吸${l.breath}` : '',
@@ -1159,8 +1172,8 @@ function shareLog(ts) {
   document.getElementById('shareTitle').textContent = `${name} · 第${l.week}周跑步记录`;
   document.getElementById('shareSub').textContent = l.date;
   document.getElementById('shareStats').innerHTML = `
+    <div><p class="text-xl font-black" style="color:var(--orange)">${l.distance || '—'}</p><p class="text-xs" style="color:var(--gray)">公里</p></div>
     <div><p class="text-xl font-black accent">${l.duration || '—'}</p><p class="text-xs" style="color:var(--gray)">分钟</p></div>
-    <div><p class="text-xl font-black" style="color:var(--orange)">${l.rpe || '—'}</p><p class="text-xs" style="color:var(--gray)">用力度</p></div>
     <div><p class="text-xl font-black text-white">${l.mood || '—'}</p><p class="text-xs" style="color:var(--gray)">心情</p></div>`;
   document.getElementById('shareMsg').textContent = l.notes ? `"${l.notes}"` : (l.completion ? compMap[l.completion] || '' : '');
   modal._shareText = lines;
@@ -1292,11 +1305,9 @@ function init() {
   document.getElementById('statWeek').textContent = curWeek;
   document.getElementById('statDays').textContent = Math.max(0, TOTAL_WEEKS * 7 - (curWeek - 1) * 7);
 
-  // Cumulative km estimate
-  const kmPerWeek = [7, 9, 11, 13, 15, 17, 19, 19, 21, 21, 19, 13].slice(0, TOTAL_WEEKS);
-  let totalKm = 0;
-  for (let i = 0; i < curWeek - 1; i++) totalKm += kmPerWeek[i] || 0;
-  document.getElementById('statKm').textContent = totalKm;
+  // Cumulative km from actual logged distances
+  const totalKm = (state.logs || []).reduce((sum, l) => sum + (l.distance || 0), 0);
+  document.getElementById('statKm').textContent = totalKm % 1 === 0 ? totalKm : totalKm.toFixed(1);
 
   renderRoadmap();
   renderContent();
@@ -1450,6 +1461,7 @@ function renderTraining() {
           <div class="flex justify-between items-center mb-1">
             <span class="font-bold" style="color:var(--text)">${l.mood || ''} ${l.date}</span>
             <div class="flex items-center gap-1.5">
+              ${l.distance ? `<span class="badge badge-orange">${l.distance}km</span>` : ''}
               ${l.duration ? `<span class="badge badge-green">${l.duration}分钟</span>` : ''}
               <button onclick="shareLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(34,197,94,.08);color:var(--green)">分享</button>
               <button onclick="editLog(${l.ts})" class="px-2 py-0.5 rounded-lg font-bold" style="background:rgba(255,255,255,.06);color:var(--gray)">编辑</button>
