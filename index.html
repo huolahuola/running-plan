@@ -1737,9 +1737,9 @@ function _drawFooter(ctx, W, H, PAD) {
   ctx.fillStyle = '#0a1020'; ctx.fill();
   _drawQR(ctx, qx, qy, QS, '#22c55e', '#0a1020');
   ctx.restore();
-  _ctxFont(ctx,13,'bold','#e2e8f0'); ctx.fillText('扫码查看完整课程',PAD,fy+28);
-  _ctxFont(ctx,11,'normal','#475569'); ctx.fillText(SITE_URL,PAD,fy+48);
-  _ctxFont(ctx,11,'normal','#334155'); ctx.fillText('🏃‍♀️ 跑起来 · 12周新手跑步计划',PAD,fy+66);
+  _ctxFont(ctx,20,'bold','#f1f5f9'); ctx.fillText('12周，跑出你的第一个10K',PAD,fy+32);
+  _ctxFont(ctx,12,'normal','#475569'); ctx.fillText(SITE_URL,PAD,fy+54);
+  _ctxFont(ctx,12,'normal','#334155'); ctx.fillText('🏃‍♀️ 跑起来 · 扫码查看完整课程',PAD,fy+74);
 }
 
 const _FOOTER_H = 108, _HEADER_H = 58, _PAD = 46;
@@ -1837,9 +1837,9 @@ async function shareKnCard(wk, si) {
       ctx.fillStyle='#050c18'; ctx.fill();
       _drawQR(ctx,W-PAD-QS,FY+13,QS,accent,'#050c18');
       ctx.restore();
-      _ctxFont(ctx,13,'bold','#e2e8f0'); ctx.fillText('扫码查看完整课程',PAD,FY+28);
-      _ctxFont(ctx,11,'normal','#4b5563'); ctx.fillText(SITE_URL,PAD,FY+48);
-      _ctxFont(ctx,11,'normal','#374151'); ctx.fillText('🏃‍♀️ 跑起来 · 12周新手跑步计划',PAD,FY+68);
+      _ctxFont(ctx,20,'bold','#f1f5f9'); ctx.fillText('12周，跑出你的第一个10K',PAD,FY+32);
+      _ctxFont(ctx,12,'normal','#4b5563'); ctx.fillText(SITE_URL,PAD,FY+54);
+      _ctxFont(ctx,12,'normal','#374151'); ctx.fillText('🏃‍♀️ 跑起来 · 扫码查看完整课程',PAD,FY+74);
     });
 
     _showCardModal(cvs,`跑步知识_第${wk}周_${sec.heading.slice(0,8)}.png`);
