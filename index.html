@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>跑起来 · 5周新手跑步计划</title>
+  <title>跑起来 · 12周新手跑步计划</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script type="module">
@@ -170,7 +170,7 @@
 
     <!-- Panel 1: New user form -->
     <div id="setupFormPanel">
-      <div class="text-4xl text-center mb-3">🏃</div>
+      <div class="text-4xl text-center mb-3">🏃‍♀️</div>
       <h2 class="text-2xl font-black text-center mb-1">你好，跑者！</h2>
       <p class="text-center text-sm mb-6" style="color:var(--gray)">设置开始日期，解锁你的5周计划</p>
       <div class="space-y-4">
@@ -364,7 +364,7 @@
 <!-- ─── Nav ────────────────────────────────────────── -->
 <nav class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-5 py-3.5" style="background:rgba(8,13,23,.85); backdrop-filter:blur(16px); border-bottom:1px solid var(--border)">
   <div class="flex items-center gap-2">
-    <span class="text-xl">🏃</span>
+    <span class="text-xl">🏃‍♀️</span>
     <span class="font-black text-base tracking-tight">跑起来</span>
   </div>
   <div id="navInfo" class="hidden flex items-center gap-2">
@@ -382,7 +382,7 @@
     <div class="max-w-lg mx-auto">
       <p id="heroGreet" class="text-sm font-bold mb-1" style="color:var(--green)">第1周 · 开始</p>
       <h1 class="text-3xl font-black leading-tight mb-2">迈出第一步<br>改变从今天开始</h1>
-      <p id="heroSub" class="text-sm mb-6" style="color:var(--gray)">5周，迈出改变的第一步</p>
+      <p id="heroSub" class="text-sm mb-6" style="color:var(--gray)">12周后完成人生第一个10公里</p>
 
       <!-- Progress overview -->
       <div class="glass rounded-2xl p-5 mb-2 green-glow">
@@ -837,7 +837,7 @@ const PLAN = [
     },
   },
   {
-    week: 10, topic: '你的第一个5K', icon: '🏁', color: '#22c55e',
+    week: 10, topic: '冲刺10K', icon: '🏁', color: '#22c55e',
     weeklyKm: '20–22 km',
     sessions: [
       { day: '周二', label: '轻松跑25分钟', desc: '轻松配速，保存体力', duration: 35, type: 'run' },
@@ -913,14 +913,14 @@ const PLAN = [
       sections: [
         { heading: '比赛日时间轴', tips: ['⏰ 比赛前2小时：吃早餐（平时常吃的）', '⏰ 比赛前1小时：穿好装备，去熟悉场地', '⏰ 比赛前30分钟：动态热身10分钟', '⏰ 比赛前10分钟：站在起跑线附近，做深呼吸'] },
         { heading: '心态调整', text: '紧张是正常的，甚至是好事——肾上腺素会让你跑得更好。把紧张感转化为兴奋感：<br><br>不要对自己说"我不能失败"，而是说"我来享受这12周努力的成果"。' },
-        { heading: '跑完5K之后', text: '恭喜你！你已经是一名真正的跑者了。🎉<br><br>你只用了12周，就完成了很多人一辈子都没做到的事。现在，下一个目标是什么？' },
+        { heading: '跑完10K之后', text: '恭喜你！你已经是一名真正的跑者了。🎉<br><br>你只用了12周，就完成了很多人一辈子都没做到的事。现在，下一个目标是什么？' },
       ],
     },
   },
 ];
 
 // ─── State ───────────────────────────────────────────
-const TOTAL_WEEKS = 5;
+const TOTAL_WEEKS = 12;
 let state = JSON.parse(localStorage.getItem('runstart_v1') || '{}');
 let selectedWeek = 1;
 let activeTab = 'training';
@@ -1240,7 +1240,7 @@ function init() {
   // Hero
   const names = { '周一': 'Mon', '周三': 'Wed', '周六': 'Sat' };
   document.getElementById('heroGreet').textContent = `第${curWeek}周 · ${state.name || '跑者'}，加油！`;
-  document.getElementById('heroSub').textContent = `${TOTAL_WEEKS}周后你将完成人生第一个5公里 · 已坚持 ${curWeek - 1} 周`;
+  document.getElementById('heroSub').textContent = `${TOTAL_WEEKS}周后完成人生第一个10公里 · 已坚持 ${curWeek - 1} 周`;
   document.getElementById('navWeekBadge').textContent = `第${curWeek}周`;
 
   // Progress
@@ -1363,7 +1363,7 @@ function renderTraining() {
           <div class="flex items-center gap-3 flex-1 min-w-0">
             <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm"
               style="background:${done ? 'var(--green)' : isRace ? 'rgba(249,115,22,.15)' : isRest ? 'rgba(255,255,255,.05)' : 'var(--green-dim)'}">
-              ${done ? '✓' : isRace ? '🏁' : isRest ? '💤' : '🏃'}
+              ${done ? '✓' : isRace ? '🏁' : isRest ? '💤' : '🏃‍♀️'}
             </div>
             <div class="min-w-0">
               <p class="font-bold text-sm ${done ? 'line-through' : ''}" style="${done ? 'color:var(--gray)' : ''}">${s.day} <span class="font-normal">· ${s.label}</span></p>
@@ -1688,153 +1688,160 @@ function _roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-async function _drawCardBase(ctx, W, H, accentColor) {
-  // Background
+// Measure wrapped text height without drawing
+function _measureWrapped(ctx, text, maxW, lineH) {
+  let line = '', count = 0;
+  for (let i = 0; i < text.length; i++) {
+    const test = line + text[i];
+    if (ctx.measureText(test).width > maxW && line) { count++; line = text[i]; }
+    else { line = test; }
+  }
+  if (line) count++;
+  return count * lineH;
+}
+
+async function _drawCardBg(ctx, W, H, accentColor) {
   const bg = ctx.createLinearGradient(0,0,W,H);
   bg.addColorStop(0,'#0d1526'); bg.addColorStop(1,'#080d17');
   ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
-  // Ambient glow
-  const glow = ctx.createRadialGradient(W*.55, 0, 0, W*.55, 0, H*.7);
-  glow.addColorStop(0, accentColor+'18'); glow.addColorStop(1,'transparent');
+  const glow = ctx.createRadialGradient(W*.55,0,0,W*.55,0,H*.75);
+  glow.addColorStop(0,accentColor+'1a'); glow.addColorStop(1,'transparent');
   ctx.fillStyle = glow; ctx.fillRect(0,0,W,H);
-  // Header strip
-  ctx.fillStyle = '#111827'; ctx.fillRect(0,0,W,58);
-  ctx.fillStyle = accentColor; ctx.fillRect(0,0,W,3);
-  ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(0,58,W,1);
+  ctx.fillStyle='#111827'; ctx.fillRect(0,0,W,58);
+  ctx.fillStyle=accentColor; ctx.fillRect(0,0,W,3);
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(0,58,W,1);
 }
 
-async function _drawQR(ctx, x, y, size) {
+async function _drawFooter(ctx, W, H, PAD) {
+  const FH = 108, fy = H - FH, QS = 82;
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(PAD,fy,W-PAD*2,1);
+  // QR code — await so it's rendered before toDataURL()
   try {
     const qc = document.createElement('canvas');
-    await QRCode.toCanvas(qc, SITE_URL, { width: size*2, margin:1, color:{ dark:'#22c55e', light:'#0a1020' } });
+    await QRCode.toCanvas(qc, SITE_URL, { width:QS*2, margin:1, color:{ dark:'#22c55e', light:'#0a1020' } });
+    const qx=W-PAD-QS, qy=fy+13;
     ctx.save();
-    _roundRect(ctx, x-5, y-5, size+10, size+10, 8);
-    ctx.clip();
-    ctx.fillStyle = '#0a1020'; ctx.fill();
-    ctx.drawImage(qc, x, y, size, size);
+    _roundRect(ctx,qx-4,qy-4,QS+8,QS+8,8); ctx.clip();
+    ctx.fillStyle='#0a1020'; ctx.fill();
+    ctx.drawImage(qc,qx,qy,QS,QS);
     ctx.restore();
   } catch(e) {}
+  _ctxFont(ctx,13,'bold','#e2e8f0'); ctx.fillText('扫码查看完整课程',PAD,fy+28);
+  _ctxFont(ctx,11,'normal','#475569'); ctx.fillText(SITE_URL,PAD,fy+48);
+  _ctxFont(ctx,11,'normal','#334155'); ctx.fillText('🏃‍♀️ 跑起来 · 12周新手跑步计划',PAD,fy+66);
 }
 
-function _drawFooter(ctx, W, H, PAD) {
-  const fy = H - 118;
-  ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(PAD, fy, W-PAD*2, 1);
-  const QS = 86;
-  _drawQR(ctx, W-PAD-QS, fy+14, QS);
-  _ctxFont(ctx, 13, 'bold', '#e2e8f0');
-  ctx.fillText('扫码查看完整课程', PAD, fy+32);
-  _ctxFont(ctx, 11, 'normal', '#475569');
-  ctx.fillText(SITE_URL, PAD, fy+52);
-  _ctxFont(ctx, 11, 'normal', '#334155');
-  ctx.fillText('🏃 跑起来 · 5周新手跑步计划', PAD, fy+70);
-}
+const _FOOTER_H = 108, _HEADER_H = 58, _PAD = 46;
 
-async function _buildCanvas(drawFn, W, H) {
+async function _buildCard(W, H, drawFn) {
   const DPR = 2;
   const cvs = document.createElement('canvas');
-  cvs.width = W*DPR; cvs.height = H*DPR;
-  const ctx = cvs.getContext('2d');
-  ctx.scale(DPR, DPR);
-  await drawFn(ctx, W, H);
-  return cvs;
+  cvs.width=W*DPR; cvs.height=H*DPR;
+  const ctx=cvs.getContext('2d'); ctx.scale(DPR,DPR);
+  await drawFn(ctx); return cvs;
 }
 
 function _showCardModal(cvs, filename) {
   document.getElementById('cardShareImg').src = cvs.toDataURL('image/png');
   document.getElementById('cardShareDownload').onclick = () => {
-    const a = document.createElement('a');
-    a.download = filename; a.href = cvs.toDataURL('image/png'); a.click();
+    const a=document.createElement('a'); a.download=filename; a.href=cvs.toDataURL('image/png'); a.click();
   };
   document.getElementById('cardShareModal').classList.remove('hidden');
 }
 
-// Knowledge section → card
+// Knowledge section → auto-height card
 async function shareKnCard(wk, si) {
-  const W = 800, H = 530, PAD = 46;
-  const w = PLAN[wk-1], sec = w.knowledge.sections[si];
-  const strip = s => s.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&');
+  const W=800, PAD=_PAD;
+  const w=PLAN[wk-1], sec=w.knowledge.sections[si];
+  const strip=s=>s.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&');
+  const contentW=W-PAD*2-150;
 
-  const cvs = await _buildCanvas(async (ctx) => {
-    await _drawCardBase(ctx, W, H, w.color || '#22c55e');
-    // Header
-    _ctxFont(ctx, 15, 'bold', '#22c55e'); ctx.fillText('🏃 跑起来', PAD, 38);
-    _ctxFont(ctx, 13, 'normal', '#475569');
-    ctx.textAlign='right'; ctx.fillText(`第${wk}周 · ${w.topic}`, W-PAD, 38); ctx.textAlign='left';
-    // Section heading (large)
-    _ctxFont(ctx, 22, 'bold', w.color || '#22c55e');
-    const hLines = _fillWrapped(ctx, sec.heading, PAD, 93, W-PAD*2-155, 30, 2);
-    let y = 93 + hLines*30 + 16;
-    // Divider accent
-    ctx.fillStyle = (w.color||'#22c55e')+'40'; ctx.fillRect(PAD, y-8, 40, 2); y += 4;
-    // Content
-    _ctxFont(ctx, 15, 'normal', '#94a3b8');
-    if (sec.text) {
-      _fillWrapped(ctx, strip(sec.text), PAD, y, W-PAD*2-155, 24, 7);
-    } else if (sec.tips) {
-      sec.tips.slice(0,5).forEach(tip => {
-        const n = _fillWrapped(ctx, tip, PAD, y, W-PAD*2-155, 23, 2);
-        y += n*23 + 6;
-      });
-    } else if (sec.zones) {
-      _ctxFont(ctx, 14, 'normal', '#64748b');
-      ctx.fillText('Zone 1–5 心率区间详见完整课程 ↗', PAD, y);
-    } else if (sec.table) {
-      _ctxFont(ctx, 14, 'normal', '#64748b');
-      ctx.fillText('5K/10K/半马/全马配速参考表详见完整课程 ↗', PAD, y);
-    }
-    await _drawFooter(ctx, W, H, PAD);
-  }, W, H);
+  // Measure content height using temp canvas
+  const tmp=document.createElement('canvas').getContext('2d');
+  _ctxFont(tmp,22,'bold','#fff');
+  let ch=_measureWrapped(tmp,sec.heading,contentW,30)+20;
+  _ctxFont(tmp,15,'normal','#fff');
+  if(sec.text)      ch+=_measureWrapped(tmp,strip(sec.text),contentW,24)+8;
+  else if(sec.tips) { sec.tips.slice(0,6).forEach(t=>{ ch+=_measureWrapped(tmp,t,contentW,23)+7; }); }
+  else              ch+=30;
 
-  _showCardModal(cvs, `跑步知识_第${wk}周_${sec.heading.slice(0,8)}.png`);
+  const H=_HEADER_H+80+ch+_FOOTER_H+40;
+
+  const cvs=await _buildCard(W,H,async ctx=>{
+    await _drawCardBg(ctx,W,H,w.color||'#22c55e');
+    _ctxFont(ctx,15,'bold','#22c55e'); ctx.fillText('🏃‍♀️ 跑起来',PAD,38);
+    _ctxFont(ctx,13,'normal','#475569');
+    ctx.textAlign='right'; ctx.fillText(`第${wk}周 · ${w.topic}`,W-PAD,38); ctx.textAlign='left';
+    _ctxFont(ctx,22,'bold',w.color||'#22c55e');
+    const hn=_fillWrapped(ctx,sec.heading,PAD,90,contentW,30,3);
+    let y=90+hn*30+18;
+    ctx.fillStyle=(w.color||'#22c55e')+'40'; ctx.fillRect(PAD,y-10,36,2); y+=6;
+    _ctxFont(ctx,15,'normal','#94a3b8');
+    if(sec.text)      _fillWrapped(ctx,strip(sec.text),PAD,y,contentW,24,10);
+    else if(sec.tips) sec.tips.slice(0,6).forEach(t=>{ y+=_fillWrapped(ctx,t,PAD,y,contentW,23,2)*23+7; });
+    else if(sec.zones){ _ctxFont(ctx,13,'normal','#64748b'); ctx.fillText('Zone 1–5 心率区间详见完整课程 ↗',PAD,y); }
+    else if(sec.table){ _ctxFont(ctx,13,'normal','#64748b'); ctx.fillText('5K/10K/半马/全马配速参考表详见完整课程 ↗',PAD,y); }
+    await _drawFooter(ctx,W,H,PAD);
+  });
+
+  _showCardModal(cvs,`跑步知识_第${wk}周_${sec.heading.slice(0,8)}.png`);
 }
 
-// Run log → card
+// Run log → auto-height card
 async function shareRunCard(ts) {
-  const l = (state.logs||[]).find(x=>x.ts===ts);
-  if (!l) return;
-  const name = state.name || '跑者';
-  const W = 800, H = 500, PAD = 46;
-  const compMap = { full:'全程跑完 ✅', walk:'中途走了几步', cut:'提前结束了' };
+  const l=(state.logs||[]).find(x=>x.ts===ts);
+  if(!l) return;
+  const name=state.name||'跑者', W=800, PAD=_PAD;
+  const compMap={full:'全程跑完 ✅',walk:'中途走了几步',cut:'提前结束了'};
+  const contentW=W-PAD*2-150;
+  const stats=[
+    l.distance?[l.distance+'km','距离','#f97316']:null,
+    l.duration?[l.duration+'min','时长','#22c55e']:null,
+    l.rpe?[`RPE ${l.rpe}`,'用力度','#8b5cf6']:null,
+    l.mood?[l.mood,'心情','#f1f5f9']:null,
+  ].filter(Boolean);
 
-  const cvs = await _buildCanvas(async (ctx) => {
-    await _drawCardBase(ctx, W, H, '#22c55e');
-    // Header
-    _ctxFont(ctx, 15, 'bold', '#22c55e'); ctx.fillText('🏃 跑起来', PAD, 38);
-    _ctxFont(ctx, 13, 'normal', '#475569');
-    ctx.textAlign='right'; ctx.fillText(`第${l.week}周 · ${l.date}`, W-PAD, 38); ctx.textAlign='left';
-    // Name
-    _ctxFont(ctx, 20, 'bold', '#f1f5f9');
-    ctx.fillText(`${name} 的跑步记录`, PAD, 95);
-    // Stats grid
-    const stats = [
-      l.distance ? [l.distance+'km','距离','#f97316'] : null,
-      l.duration ? [l.duration+'min','时长','#22c55e'] : null,
-      l.rpe ? [`RPE ${l.rpe}`,'用力度','#8b5cf6'] : null,
-      l.mood ? [l.mood,'心情','#f1f5f9'] : null,
-    ].filter(Boolean);
-    const bW = 140, bH = 68, bGap = 16;
-    stats.forEach((s, i) => {
-      const bx = PAD + i*(bW+bGap), by = 118;
-      ctx.fillStyle = s[2]+'18'; _roundRect(ctx,bx,by,bW,bH,10); ctx.fill();
-      ctx.strokeStyle = s[2]+'40'; ctx.lineWidth=1; ctx.stroke();
-      _ctxFont(ctx, 20, 'bold', s[2]); ctx.fillText(s[0], bx+14, by+30);
-      _ctxFont(ctx, 11, 'normal', '#64748b'); ctx.fillText(s[1], bx+14, by+52);
+  // Measure dynamic content
+  let detH=0;
+  if(l.completion) detH+=26;
+  if(l.breath)     detH+=26;
+  if(l.leg)        detH+=26;
+  let notesH=0;
+  if(l.notes){
+    const tmp=document.createElement('canvas').getContext('2d');
+    _ctxFont(tmp,15,'normal','#fff');
+    notesH=_measureWrapped(tmp,`"${l.notes}"`,contentW-28,24)+20;
+  }
+  const H=_HEADER_H+38+52+90+(stats.length?90:10)+detH+notesH+_FOOTER_H+40;
+
+  const cvs=await _buildCard(W,H,async ctx=>{
+    await _drawCardBg(ctx,W,H,'#22c55e');
+    _ctxFont(ctx,15,'bold','#22c55e'); ctx.fillText('🏃‍♀️ 跑起来',PAD,38);
+    _ctxFont(ctx,13,'normal','#475569');
+    ctx.textAlign='right'; ctx.fillText(`第${l.week}周 · ${l.date}`,W-PAD,38); ctx.textAlign='left';
+    _ctxFont(ctx,20,'bold','#f1f5f9'); ctx.fillText(`${name} 的跑步记录`,PAD,92);
+    const bW=140,bH=68,bGap=14;
+    stats.forEach((s,i)=>{
+      const bx=PAD+i*(bW+bGap),by=114;
+      ctx.fillStyle=s[2]+'18'; _roundRect(ctx,bx,by,bW,bH,10); ctx.fill();
+      ctx.strokeStyle=s[2]+'40'; ctx.lineWidth=1; ctx.stroke();
+      _ctxFont(ctx,20,'bold',s[2]); ctx.fillText(s[0],bx+14,by+30);
+      _ctxFont(ctx,11,'normal','#64748b'); ctx.fillText(s[1],bx+14,by+52);
     });
-    let y = 210;
-    if (l.completion) { _ctxFont(ctx,14,'normal','#94a3b8'); ctx.fillText(compMap[l.completion]||l.completion, PAD, y); y+=26; }
-    if (l.breath)     { _ctxFont(ctx,14,'normal','#94a3b8'); ctx.fillText(`🌬 呼吸${l.breath}`, PAD, y); y+=26; }
-    if (l.leg)        { _ctxFont(ctx,14,'normal','#94a3b8'); ctx.fillText(`🦵 腿部${l.leg}`, PAD, y); y+=26; }
-    if (l.notes) {
-      y += 4;
-      _ctxFont(ctx, 15, 'normal', '#cbd5e1');
-      ctx.fillStyle = 'rgba(255,255,255,0.04)'; _roundRect(ctx, PAD, y, W-PAD*2-155, 56, 10); ctx.fill();
-      _ctxFont(ctx, 15, 'normal', '#cbd5e1');
-      _fillWrapped(ctx, `"${l.notes}"`, PAD+14, y+22, W-PAD*2-155-28, 24, 2);
+    let y=stats.length?198:130;
+    if(l.completion){_ctxFont(ctx,14,'normal','#94a3b8');ctx.fillText(compMap[l.completion]||l.completion,PAD,y);y+=26;}
+    if(l.breath)    {_ctxFont(ctx,14,'normal','#94a3b8');ctx.fillText(`🌬 呼吸${l.breath}`,PAD,y);y+=26;}
+    if(l.leg)       {_ctxFont(ctx,14,'normal','#94a3b8');ctx.fillText(`🦵 腿部${l.leg}`,PAD,y);y+=26;}
+    if(l.notes){
+      y+=6;
+      ctx.fillStyle='rgba(255,255,255,0.04)'; _roundRect(ctx,PAD,y,contentW,notesH,10); ctx.fill();
+      _ctxFont(ctx,15,'normal','#cbd5e1');
+      _fillWrapped(ctx,`"${l.notes}"`,PAD+14,y+22,contentW-28,24,5);
     }
-    await _drawFooter(ctx, W, H, PAD);
-  }, W, H);
+    await _drawFooter(ctx,W,H,PAD);
+  });
 
-  _showCardModal(cvs, `跑步记录_第${l.week}周_${l.date.replace('/','')}.png`);
+  _showCardModal(cvs,`跑步记录_第${l.week}周_${l.date.replace('/','')}.png`);
 }
 
 // ─── Boot ─────────────────────────────────────────────
