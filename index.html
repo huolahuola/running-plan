@@ -1197,6 +1197,19 @@ function renderTraining() {
       <p class="text-sm" style="color:var(--gray)">${d.getMonth()+1}月${d.getDate()}日解锁</p>
     </div>`;
   } else {
+    // Pre-run tips: collapsible "跑前锦囊" — prominent, before sessions, open by default
+    if (w.tips) {
+      html += `<div class="rounded-2xl p-4 mb-4 fade-up" style="background:rgba(249,115,22,0.1);border:1.5px solid rgba(249,115,22,0.4)">
+        <button onclick="var el=document.getElementById('tips${w.week}');el.classList.toggle('hidden');this.querySelector('.chev').style.transform=el.classList.contains('hidden')?'':'rotate(180deg)'" class="w-full flex items-center justify-between">
+          <span class="font-black text-base" style="color:var(--orange)">🎒 跑前锦囊</span>
+          <span class="chev text-base transition-transform" style="color:var(--orange);display:inline-block">▾</span>
+        </button>
+        <div id="tips${w.week}" class="mt-3">
+          ${w.tips.before.map(t => `<div class="flex gap-2 mb-2 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#cbd5e1">${t.slice(2)}</span></div>`).join('')}
+        </div>
+      </div>`;
+    }
+
     // Concept card (week 1 only)
     if (w.concept) {
       html += `<div class="glass rounded-2xl p-4 mb-3 fade-up" style="border-left:3px solid var(--green)">
@@ -1234,19 +1247,6 @@ function renderTraining() {
         </button>` : ''}
       </div>`;
     });
-
-    // Pre-run tips: collapsible "跑前锦囊"
-    if (w.tips) {
-      html += `<div class="glass rounded-2xl p-4 mb-3 fade-up">
-        <button onclick="var el=document.getElementById('tips${w.week}');el.classList.toggle('hidden');this.querySelector('.chev').style.transform=el.classList.contains('hidden')?'':'rotate(180deg)'" class="w-full flex items-center justify-between">
-          <span class="font-black text-sm">🎒 跑前锦囊</span>
-          <span class="chev text-base transition-transform" style="color:var(--orange);display:inline-block">▾</span>
-        </button>
-        <div id="tips${w.week}" class="hidden mt-3">
-          ${w.tips.before.map(t => `<div class="flex gap-2 mb-1.5 text-sm"><span class="flex-shrink-0">${t.slice(0,2)}</span><span style="color:#94a3b8">${t.slice(2)}</span></div>`).join('')}
-        </div>
-      </div>`;
-    }
 
     // Post-run tips: shown after saving a log
     if (w.tips && _afterTipsWeek === w.week) {
