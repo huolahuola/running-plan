@@ -974,15 +974,15 @@ async function fbUpdateLog(entry) {
 }
 
 function currentWeekNum() {
-  if (!state.startDate) return 1;
-  const start = new Date(state.startDate);
-  const now = new Date();
-  const diff = Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000));
-  return Math.max(1, Math.min(TOTAL_WEEKS, diff + 1));
+  const logs = state.logs || [];
+  if (!logs.length) return 1;
+  const maxLogged = Math.max(...logs.map(l => l.week || 1));
+  return Math.min(TOTAL_WEEKS, maxLogged + 1);
 }
 
 function isUnlocked(week) {
-  return week <= currentWeekNum();
+  if (week === 1) return true;
+  return (state.logs || []).some(l => l.week === week - 1);
 }
 
 // ─── Lightsaber tips toggle ───────────────────────────
@@ -1333,12 +1333,10 @@ function renderTraining() {
   </div>`;
 
   if (!unlocked) {
-    const d = new Date(state.startDate);
-    d.setDate(d.getDate() + (w.week - 1) * 7);
     html += `<div class="glass rounded-2xl p-6 text-center fade-up">
       <div class="text-3xl mb-2">🔒</div>
-      <p class="font-bold mb-1">第 ${w.week} 周尚未开始</p>
-      <p class="text-sm" style="color:var(--gray)">${d.getMonth()+1}月${d.getDate()}日解锁</p>
+      <p class="font-bold mb-1">第 ${w.week} 周尚未解锁</p>
+      <p class="text-sm" style="color:var(--gray)">完成第 ${w.week - 1} 周的跑步后解锁</p>
     </div>`;
   } else {
     // Pre-run tips: collapsible "跑前锦囊" — centered, collapsed, lightsaber open
@@ -1445,12 +1443,10 @@ function renderKnowledge() {
   </div>`;
 
   if (!unlocked) {
-    const d = new Date(state.startDate);
-    d.setDate(d.getDate() + (w.week - 1) * 7);
     html += `<div class="glass rounded-2xl p-6 text-center locked-card fade-up">
       <div class="text-3xl mb-2">🔒</div>
       <p class="font-bold mb-1">第 ${w.week} 周知识尚未解锁</p>
-      <p class="text-sm" style="color:var(--gray)">${d.getMonth()+1}月${d.getDate()}日解锁</p>
+      <p class="text-sm" style="color:var(--gray)">完成第 ${w.week - 1} 周的跑步后解锁</p>
     </div>`;
     document.getElementById('knowledgeContent').innerHTML = html;
     return;
